@@ -18,6 +18,6 @@ fn main() -> Result<()> {
 fn parse_input(mut read: impl Read) -> Result<()> {
     let mut buf = Box::leak(Box::new(String::new()));
     read.read_to_string(&mut buf)?;
-    dbg!(parser::org().easy_parse(position::Stream::new(&buf[..]))?);
+    dbg!(parser::org_file().easy_parse(position::Stream::new(&buf[..]))?);
     Ok(())
 }
