@@ -1,7 +1,7 @@
 mod parser;
 
 use anyhow::Result;
-use combine::{stream::position, EasyParser, Parser, Stream};
+use combine::{stream::position, EasyParser};
 use std::{
     env,
     fs::File,
