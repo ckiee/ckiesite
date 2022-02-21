@@ -2,11 +2,15 @@
 #+TITLE:hi
 
 toplevel
-#comment
+# comment
 # commenting words
-#commenting words
 * hello
 Some text here!
 ** world
 ..and some more text here.
 ** this shouldn't be inside world
+* another *one*
+yeah this has some text
+maybe even a /few/ *lines*?
+
+now this has some spacing *yay*
