@@ -1,5 +1,5 @@
 use combine::{
-    attempt, between, choice, many1, opaque, optional,
+    attempt, between, choice, many1, opaque,
     parser::char::newline,
     parser::{
         char::string,
