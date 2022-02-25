@@ -1,5 +1,3 @@
-mod parse;
-
 use anyhow::Result;
 use std::{
     env,
@@ -7,7 +5,7 @@ use std::{
     io::{self, Read},
 };
 
-use crate::parse::parse_n_pass;
+use ckiesite::{parse::parse_n_pass, treewalk::ast_to_html_string};
 
 fn main() -> Result<()> {
     match env::args().nth(1) {
@@ -19,7 +17,8 @@ fn main() -> Result<()> {
 fn parse_input(mut read: impl Read) -> Result<()> {
     let buf = Box::leak(Box::new(String::new()));
     read.read_to_string(buf)?;
-    let ast = parse_n_pass(buf);
-    dbg!(&ast);
+    let ast = parse_n_pass(buf)?;
+    let html = ast_to_html_string(&ast);
+    println!("{}", html);
     Ok(())
 }
