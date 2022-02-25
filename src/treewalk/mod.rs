@@ -1,7 +1,7 @@
 ///
 /// This module walks the AST and outputs HTML.
 ///
-use crate::parse::{AstNode, BlockExprNode, BlockExprTree, AbstractSyntaxTree};
+use crate::parse::{AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree};
 
 pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> String {
     let mut buf = String::with_capacity(4096);
@@ -28,6 +28,7 @@ fn ast_node_to_html_string(node: &AstNode) -> Option<String> {
             children = ast_to_html_string(children)
         )),
         AstNode::BlockExprs(bet) => Some(bet_to_html_string(bet)),
+        AstNode::Block(ast) => Some(format!("<p>{}</p>", ast_to_html_string(ast))),
     }
 }
 
@@ -45,8 +46,7 @@ fn bet_to_html_string(nodes: &BlockExprTree) -> String {
 fn block_expr_to_html_string(node: &BlockExprNode) -> Option<String> {
     match node {
         BlockExprNode::Bold(bet) => Some(format!("<b>{}</b>", bet_to_html_string(bet))),
-        // TODO implement these two properly with a parser pass to transform into BlockExprNode::Block
         BlockExprNode::Char(c) => Some(c.to_string()),
-        BlockExprNode::Linespace => Some("\n".to_string())
+        BlockExprNode::Linespace => panic!("illegal node; parser pass should have eliminated all linespaces")
     }
 }
