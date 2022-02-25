@@ -8,17 +8,38 @@ use std::{
 use ckiesite::{parse::parse_n_pass, treewalk::ast_to_html_string};
 
 fn main() -> Result<()> {
-    match env::args().nth(1) {
-        Some(file) => parse_input(File::open(file)?),
-        None => parse_input(io::stdin()),
-    }
-}
+    let mut args = env::args().into_iter().peekable();
+    let mut print_ast = false;
+    let mut maybe_file: Option<String> = None;
 
-fn parse_input(mut read: impl Read) -> Result<()> {
+    // index 0 is undefined
+    args.next();
+
+    while let Some(arg) = args.next() {
+        match &arg[..] {
+            "--print-ast" => {
+                print_ast = true;
+            }
+            file if args.peek().is_none() => {
+                maybe_file = Some(file.to_string());
+            }
+            arg => panic!("unknown arg: {}", arg),
+        }
+    }
+
     let buf = Box::leak(Box::new(String::new()));
-    read.read_to_string(buf)?;
+    match maybe_file {
+        Some(file) => File::open(file)?.read_to_string(buf)?,
+        None => io::stdin().read_to_string(buf)?,
+    };
+
     let ast = parse_n_pass(buf)?;
+    if print_ast {
+        println!("{:#?}", ast);
+    }
+
     let html = ast_to_html_string(&ast);
     println!("{}", html);
+
     Ok(())
 }
