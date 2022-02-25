@@ -1,5 +1,5 @@
 use combine::{
-    attempt, between, choice, many1, opaque,
+    attempt, between, choice, many1, opaque, optional,
     parser::char::newline,
     parser::{
         char::string,
@@ -37,11 +37,12 @@ where
 {
     let comment = (string("# "), skip_many(satisfy(|c| c != '\n')))
         .map(|_| ())
-        .expected("comment (`#`)");
+        .expected("a comment");
     let skipline = newline().map(|_| ());
     skipline
         .or(attempt(comment))
         .map(|_| AstNode::BlockExprs(vec![BlockExprNode::Linespace]))
+        .message("while parsing linespace")
 }
 
 fn directive<Input>() -> impl Parser<Input, Output = AstNode>
@@ -98,7 +99,8 @@ where
             Ok(many1(block_expr_node())
                 .easy_parse(position::Stream::new(&s[..]))
                 // this is the except on Result
-                .expect("In bold subparser").0)
+                .expect("In bold subparser")
+                .0)
         }),
         token('*'),
     )
@@ -153,8 +155,7 @@ where
     // |linespace
     // |ast_node
     many::<Vec<_>, _, _>(
-        (ast_node(), linespace(), many::<Vec<_>, _, _>(linespace()))
-            .map(|(a, _, b)| vec![vec![a], b].into_iter().flatten().collect::<Vec<_>>()),
+        many1::<Vec<_>, _, _>(linespace()).or((ast_node(), linespace()).map(|(a, _)| vec![a])),
     )
     .map(|v| v.into_iter().flatten().collect::<Vec<_>>())
 }
