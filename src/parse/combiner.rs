@@ -12,7 +12,7 @@ use combine::{
     EasyParser, ParseError, Parser, Stream,
 };
 
-use super::data::{AstNode, BlockExprNode};
+use super::{data::{AstNode, BlockExprNode}, AbstractSyntaxTree};
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
 where
@@ -137,7 +137,7 @@ where
     choice!(attempt(heading()), directive(), ast_block_expr_node())
 }
 
-pub fn org_file<Input>() -> impl Parser<Input, Output = Vec<AstNode>>
+pub fn org_file<Input>() -> impl Parser<Input, Output = AbstractSyntaxTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,

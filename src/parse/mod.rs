@@ -6,6 +6,8 @@ mod pass;
 #[cfg(test)]
 mod test;
 
+pub use data::*;
+
 pub fn parse_n_pass(input: &'static str) -> Result<Vec<data::AstNode>> {
     use combine::stream::position::Stream;
     use combine::EasyParser;

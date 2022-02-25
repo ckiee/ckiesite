@@ -1,9 +1,9 @@
 ///
 /// This module walks the AST and outputs HTML.
 ///
-use crate::parse::{AstNode, BlockExprNode};
+use crate::parse::{AstNode, BlockExprNode, BlockExprTree, AbstractSyntaxTree};
 
-pub fn ast_to_html_string(nodes: &Vec<AstNode>) -> String {
+pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> String {
     let mut buf = String::with_capacity(4096);
     for node in nodes {
         if let Some(html) = ast_node_to_html_string(node) {
@@ -32,7 +32,7 @@ fn ast_node_to_html_string(node: &AstNode) -> Option<String> {
 }
 
 // block expr tree
-fn bet_to_html_string(nodes: &Vec<BlockExprNode>) -> String {
+fn bet_to_html_string(nodes: &BlockExprTree) -> String {
     let mut buf = String::with_capacity(4096);
     for node in nodes {
         if let Some(html) = block_expr_to_html_string(node) {
