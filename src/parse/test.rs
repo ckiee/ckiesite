@@ -1,19 +1,11 @@
 use anyhow::Result;
 use combine::{stream::position, EasyParser};
 
-use crate::parse::data::BlockExprNode;
+use crate::parse::{data::BlockExprNode, parse_n_pass};
 
 use super::{
-    combine::org_file,
     data::AstNode,
-    pass::{flat_nodes_to_tree, StopAt},
 };
-
-fn parse_n_pass(input: &'static str) -> Result<Vec<AstNode>> {
-    let ast = org_file().easy_parse(position::Stream::new(&input[..]))?.0;
-    Ok(flat_nodes_to_tree(&mut ast.iter().peekable(), StopAt::Eof))
-}
-
 #[test]
 fn parses_directive() -> Result<()> {
     assert_eq!(
