@@ -1,7 +1,6 @@
 #[derive(PartialEq, Debug, Clone)]
 pub enum AstNode {
     Directive(String, String),
-    Block { children: Vec<BlockExprNode> },
     Heading { level: u16, title: Vec<BlockExprNode>, children: Vec<AstNode> },
     BlockExprs(Vec<BlockExprNode>)
 }
