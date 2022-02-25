@@ -8,7 +8,7 @@ pub enum AstNode {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum BlockExprNode {
-    Text(String),
+    // Text(String),
     Char(char),
     Bold(Vec<BlockExprNode>),
     Linespace
