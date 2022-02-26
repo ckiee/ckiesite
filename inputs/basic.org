@@ -1,5 +1,4 @@
 #+TITLE: Hello World!
-#+TITLE:hi
 
 toplevel
 # comment

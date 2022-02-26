@@ -3,9 +3,7 @@ pub enum AstNode {
     Directive(String, String),
     /// Equivalent to html <hx>
     Heading { level: u16, title: BlockExprTree, children: AbstractSyntaxTree },
-    BlockExprs(BlockExprTree),
-    /// Equivalent to html <p>
-    Block(AbstractSyntaxTree),
+    Block(BlockType, BlockExprTree),
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -15,6 +13,12 @@ pub enum BlockExprNode {
     Bold(BlockExprTree),
     /// One or more newlines
     Linespace
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum BlockType {
+    Block,
+    Inline
 }
 
 impl BlockExprNode {

@@ -12,7 +12,10 @@ use combine::{
     EasyParser, ParseError, Parser, Stream,
 };
 
-use super::{data::{AstNode, BlockExprNode}, AbstractSyntaxTree};
+use super::{
+    data::{AstNode, BlockExprNode},
+    AbstractSyntaxTree, BlockType,
+};
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
 where
@@ -41,7 +44,7 @@ where
     let skipline = newline().map(|_| ());
     skipline
         .or(attempt(comment))
-        .map(|_| AstNode::BlockExprs(vec![BlockExprNode::Linespace]))
+        .map(|_| AstNode::Block(BlockType::Inline, vec![BlockExprNode::Linespace]))
         .message("while parsing linespace")
 }
 
@@ -74,7 +77,7 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    many1(block_expr_node()).map(|v| AstNode::BlockExprs(v))
+    many1(block_expr_node()).map(|v| AstNode::Block(BlockType::Block, v))
 }
 
 fn char<Input>() -> impl Parser<Input, Output = BlockExprNode>
