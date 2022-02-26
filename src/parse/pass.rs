@@ -1,6 +1,6 @@
 use std::{iter::Peekable, slice::Iter};
 
-use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockType};
+use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode};
 
 pub enum StopAt {
     NextHeadingWithLevel(u16),

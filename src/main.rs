@@ -5,7 +5,7 @@ use std::{
     io::{self, Read},
 };
 
-use ckiesite::{parse::parse_n_pass, treewalk::ast_to_html_string};
+use ckiesite::{parse::parse_n_pass, treewalk::ast_to_html_string, template::make_article_html};
 
 fn main() -> Result<()> {
     let mut args = env::args().into_iter().peekable();
@@ -39,7 +39,8 @@ fn main() -> Result<()> {
     }
 
     let html = ast_to_html_string(&ast);
-    println!("{}", html);
+    let templated = make_article_html(&html);
+    println!("{}", templated);
 
     Ok(())
 }
