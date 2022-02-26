@@ -35,7 +35,7 @@ fn main() -> Result<()> {
 
     let ast = parse_n_pass(buf)?;
     if print_ast {
-        println!("{:#?}", ast);
+        eprintln!("{:#?}", ast);
     }
 
     let html = ast_to_html_string(&ast);
