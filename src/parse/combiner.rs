@@ -14,7 +14,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockType,
+    AbstractSyntaxTree, BlockType, BlockExprTree,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -68,7 +68,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     opaque!(no_partial(
-        choice!(bold(), char()).message("while parsing block_expr_node")
+        choice!(bold(), italic(), underline(), strikethrough(), char()).message("while parsing block_expr_node")
     ))
 }
 
@@ -90,26 +90,71 @@ where
         .message("while parsing char")
 }
 
-fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
+fn marker_char<Input>(marker: char) -> impl Parser<Input, Output = BlockExprTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     (
-        token('*'),
-        take_until::<String, _, _>(token('*')).flat_map(|s| {
+        token(marker),
+        take_until::<String, _, _>(token(marker)).flat_map(|s| {
             // HACK ouch ouch ouch
             Ok(many1(block_expr_node())
                 .easy_parse(position::Stream::new(&s[..]))
                 // this is the except on Result
-                .expect("In bold subparser")
+                // TODO it PANICs. Make it not.
+                .expect("In marker_char subparser")
                 .0)
         }),
-        token('*'),
+        token(marker),
     )
-        .map(|(_, v, _)| BlockExprNode::Bold(v))
+        .map(|(_, v, _)| v)
+        .message("while parsing marker_char")
+}
+
+fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    marker_char('*')
+        .map(|v| BlockExprNode::Bold(v))
         .message("while parsing bold")
 }
+
+
+fn italic<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    marker_char('/')
+        .map(|v| BlockExprNode::Italic(v))
+        .message("while parsing italic")
+}
+
+
+fn underline<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    marker_char('_')
+        .map(|v| BlockExprNode::Underline(v))
+        .message("while parsing underline")
+}
+
+
+fn strikethrough<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    marker_char('+')
+        .map(|v| BlockExprNode::Strikethrough(v))
+        .message("while parsing strikethrough")
+}
+
 
 fn heading<Input>() -> impl Parser<Input, Output = AstNode>
 where
