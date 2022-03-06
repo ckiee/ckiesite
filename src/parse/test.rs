@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 
-use crate::parse::{data::BlockExprNode, parse_n_pass};
+use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType};
 
 use super::{
     data::AstNode,
@@ -19,7 +19,7 @@ fn parses_directive() -> Result<()> {
 fn parses_text() -> Result<()> {
     assert_eq!(
         parse_n_pass("hi world\n")?,
-        vec![AstNode::BlockExprs(vec![
+        vec![AstNode::Block(BlockType::Block, vec![
             BlockExprNode::Char('h'),
             BlockExprNode::Char('i'),
             BlockExprNode::Char(' '),
@@ -45,18 +45,15 @@ fn parses_whitespaces() -> Result<()> {
     assert_eq!(
         parse_n_pass(" \n \n")?,
         vec![
-            AstNode::BlockExprs(vec![BlockExprNode::Char(' ')]),
-            AstNode::BlockExprs(vec![BlockExprNode::Char(' ')])
+            AstNode::Block(BlockType::Block, vec![BlockExprNode::Char(' ')]),
+            AstNode::Block(BlockType::Block, vec![BlockExprNode::Char(' ')])
         ],
     );
 
     eprintln!("just newlines");
     assert_eq!(
         parse_n_pass("\n\n")?,
-        vec![
-            AstNode::BlockExprs(vec![BlockExprNode::Linespace]),
-            AstNode::BlockExprs(vec![BlockExprNode::Linespace])
-        ]
+        vec![]
     );
     Ok(())
 }
@@ -68,7 +65,7 @@ fn parses_comment() -> Result<()> {
         assert!(
             parse_n_pass(test)?
                 .iter()
-                .all(|n| n == &AstNode::BlockExprs(vec![BlockExprNode::Linespace])),
+                .all(|n| n == &AstNode::Block(BlockType::Block, vec![BlockExprNode::Linespace])),
             "input: '{}' did not parse to single linespace",
             test
         );
@@ -89,7 +86,7 @@ fn parses_heading() -> Result<()> {
             parse_n_pass(test.0)?,
             vec![AstNode::Heading {
                 level: test.1,
-                children: vec![AstNode::BlockExprs(vec![
+                children: vec![AstNode::Block(BlockType::Block, vec![
                     BlockExprNode::Char('b'),
                     BlockExprNode::Char('h'),
                 ])],
