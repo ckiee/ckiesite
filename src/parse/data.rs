@@ -9,8 +9,10 @@ pub enum AstNode {
 #[derive(PartialEq, Debug, Clone)]
 pub enum BlockExprNode {
     Char(char),
-    /// Equivalent to html <b>
     Bold(BlockExprTree),
+    Italic(BlockExprTree),
+    Underline(BlockExprTree),
+    Strikethrough(BlockExprTree),
     /// One or more newlines
     Linespace
 }
