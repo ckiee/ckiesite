@@ -15,7 +15,9 @@ pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> String {
 
 fn ast_node_to_html_string(node: &AstNode) -> Option<String> {
     match node {
-        AstNode::Directive(_, _) => None,
+        // HACK A bit messy. We should probably have a separate pass for directives and an out-of-AST map
+        AstNode::Directive(title, value) if title.eq_ignore_ascii_case("title") => Some(format!("<h1>{}</h1>", value)),
+        AstNode::Directive(_, _) => None, // TODO impl
         AstNode::Heading {
             children,
             level,
