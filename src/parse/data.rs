@@ -4,6 +4,8 @@ pub enum AstNode {
     /// Equivalent to html <hx>
     Heading { level: u16, title: BlockExprTree, children: AbstractSyntaxTree },
     Block(BlockType, BlockExprTree),
+    /// Equivalent to html <hr>
+    HorizRule,
 }
 
 #[derive(PartialEq, Debug, Clone)]

@@ -62,6 +62,19 @@ where
         .message("while parsing directive")
 }
 
+
+
+fn horiz_rule<Input>() -> impl Parser<Input, Output = AstNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    string("-----")
+        .map(|_| AstNode::HorizRule)
+        .message("while parsing horiz_rule")
+}
+
+
 fn block_expr_node<Input>() -> FnOpaque<Input, BlockExprNode>
 where
     Input: Stream<Token = char>,
@@ -182,7 +195,7 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    choice!(attempt(heading()), directive(), ast_block_expr_node())
+    choice!(attempt(heading()), directive(), horiz_rule(), ast_block_expr_node())
 }
 
 pub fn org_file<Input>() -> impl Parser<Input, Output = AbstractSyntaxTree>

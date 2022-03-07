@@ -31,6 +31,7 @@ fn ast_node_to_html_string(node: &AstNode) -> Option<String> {
             Some(format!("<p>{}</p>", bet_to_html_string(bet)))
         }
         AstNode::Block(BlockType::Inline, bet) => Some(bet_to_html_string(bet)),
+        AstNode::HorizRule => Some("<hr>".to_string())
     }
 }
 
