@@ -30,7 +30,9 @@ span.code {
             </style>
             </head>
             <body>
-            { unsafe_text!(content) }
+                <main>
+                    { unsafe_text!(content) }
+                </main>
             </body>
         </html>
     );
