@@ -95,7 +95,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     opaque!(no_partial(
-        choice!(bold(), italic(), underline(), strikethrough(), char())
+        choice!(inline_code(), bold(), italic(), underline(), strikethrough(), char())
             .message("while parsing block_expr_node")
     ))
 }
@@ -139,6 +139,25 @@ where
         .map(|(_, v, _)| v)
         .message("while parsing marker_char")
 }
+
+
+fn inline_code<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    macro_rules! stupid_marker {
+        () => { token('=').or(token('~')) };
+    }
+    (
+        stupid_marker!(),
+        take_until::<String, _, _>(stupid_marker!()),
+        stupid_marker!(),
+    )
+        .map(|(_, c, _)| BlockExprNode::Code(c))
+        .message("while parsing inline_code")
+}
+
 
 fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where

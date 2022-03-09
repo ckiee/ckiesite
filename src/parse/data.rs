@@ -23,6 +23,7 @@ pub enum BlockExprNode {
     Italic(BlockExprTree),
     Underline(BlockExprTree),
     Strikethrough(BlockExprTree),
+    Code(String),
     /// One or more newlines
     Linespace,
 }
