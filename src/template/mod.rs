@@ -22,7 +22,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 span.underline {
   text-decoration: underline;
-}"
+}
+span.code {
+  font-family: monospace;
+}
+"
             </style>
             </head>
             <body>

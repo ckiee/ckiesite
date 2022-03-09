@@ -103,6 +103,7 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Option<String> {
         )),
         BlockExprNode::Strikethrough(bet) => {
             Some(format!("<del>{}</del>", bet_to_html_string(bet)))
-        }
+        },
+        BlockExprNode::Code(verbatim) => Some(format!(r#"<span class="code">{}</span>"#, verbatim))
     }
 }
