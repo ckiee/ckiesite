@@ -114,7 +114,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     satisfy(|c: char| !c.is_control())
-        .map(|c| BlockExprNode::Char(c))
+        .map(BlockExprNode::Char)
         .message("while parsing char")
 }
 
@@ -165,7 +165,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     marker_char('*')
-        .map(|v| BlockExprNode::Bold(v))
+        .map(BlockExprNode::Bold)
         .message("while parsing bold")
 }
 
@@ -175,7 +175,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     marker_char('/')
-        .map(|v| BlockExprNode::Italic(v))
+        .map(BlockExprNode::Italic)
         .message("while parsing italic")
 }
 
@@ -185,7 +185,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     marker_char('_')
-        .map(|v| BlockExprNode::Underline(v))
+        .map(BlockExprNode::Underline)
         .message("while parsing underline")
 }
 
@@ -195,7 +195,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     marker_char('+')
-        .map(|v| BlockExprNode::Strikethrough(v))
+        .map(BlockExprNode::Strikethrough)
         .message("while parsing strikethrough")
 }
 

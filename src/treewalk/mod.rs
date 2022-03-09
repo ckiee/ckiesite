@@ -2,11 +2,9 @@ use anyhow::Result;
 use syntect::{
     highlighting::ThemeSet,
     html::{
-        css_for_theme_with_class_style, highlighted_html_for_string, ClassStyle,
-        ClassedHTMLGenerator,
+        highlighted_html_for_string,
     },
     parsing::SyntaxSet,
-    util::LinesWithEndings,
 };
 
 ///
@@ -58,8 +56,8 @@ fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
             let theme_set = ThemeSet::load_defaults();
             let theme = theme_set.themes.get("base16-ocean.light").unwrap();
 
-            let output_html = highlighted_html_for_string(code, &syntax_set, syntax, theme);
-            output_html
+            
+            highlighted_html_for_string(code, &syntax_set, syntax, theme)
         }
     })
 }

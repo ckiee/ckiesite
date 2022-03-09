@@ -37,5 +37,5 @@ span.code {
         </html>
     );
 
-    format!("<!DOCTYPE html>{}", doc.to_string())
+    format!("<!DOCTYPE html>{}", doc)
 }

@@ -13,7 +13,7 @@ pub fn parse_n_pass(input: &'static str) -> Result<Vec<data::AstNode>> {
     use combine::EasyParser;
     use combiner::org_file;
 
-    let ast = org_file().easy_parse(Stream::new(&input[..]))?.0;
+    let ast = org_file().easy_parse(Stream::new(input))?.0;
     Ok(pass::flat_nodes_to_tree(
         &mut ast.iter().peekable(),
         pass::StopAt::Eof,
