@@ -1,8 +1,16 @@
 #[derive(PartialEq, Debug, Clone)]
 pub enum AstNode {
+    SourceBlock {
+        language: String,
+        code: String,
+    },
     Directive(String, String),
     /// Equivalent to html <hx>
-    Heading { level: u16, title: BlockExprTree, children: AbstractSyntaxTree },
+    Heading {
+        level: u16,
+        title: BlockExprTree,
+        children: AbstractSyntaxTree,
+    },
     Block(BlockType, BlockExprTree),
     /// Equivalent to html <hr>
     HorizRule,
@@ -16,13 +24,13 @@ pub enum BlockExprNode {
     Underline(BlockExprTree),
     Strikethrough(BlockExprTree),
     /// One or more newlines
-    Linespace
+    Linespace,
 }
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum BlockType {
     Block,
-    Inline
+    Inline,
 }
 
 impl BlockExprNode {

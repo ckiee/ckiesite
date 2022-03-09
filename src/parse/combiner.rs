@@ -1,6 +1,6 @@
 use combine::{
     attempt, between, choice, many1, opaque,
-    parser::char::newline,
+    parser::char::{alpha_num, newline},
     parser::{
         char::string,
         combinator::{no_partial, FnOpaque},
@@ -14,7 +14,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockType, BlockExprTree,
+    AbstractSyntaxTree, BlockExprTree, BlockType,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -62,7 +62,22 @@ where
         .message("while parsing directive")
 }
 
-
+fn source_block<Input>() -> impl Parser<Input, Output = AstNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        string("#+BEGIN_SRC"),
+        whitespaces(),
+        many1(alpha_num()),
+        newline(),
+        take_until(string("#+END_SRC")),
+        string("#+END_SRC"),
+    )
+        .map(|(_, _, language, _, code, _)| AstNode::SourceBlock { language, code })
+        .message("while parsing source block")
+}
 
 fn horiz_rule<Input>() -> impl Parser<Input, Output = AstNode>
 where
@@ -74,14 +89,14 @@ where
         .message("while parsing horiz_rule")
 }
 
-
 fn block_expr_node<Input>() -> FnOpaque<Input, BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     opaque!(no_partial(
-        choice!(bold(), italic(), underline(), strikethrough(), char()).message("while parsing block_expr_node")
+        choice!(bold(), italic(), underline(), strikethrough(), char())
+            .message("while parsing block_expr_node")
     ))
 }
 
@@ -135,7 +150,6 @@ where
         .message("while parsing bold")
 }
 
-
 fn italic<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
@@ -145,7 +159,6 @@ where
         .map(|v| BlockExprNode::Italic(v))
         .message("while parsing italic")
 }
-
 
 fn underline<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
@@ -157,7 +170,6 @@ where
         .message("while parsing underline")
 }
 
-
 fn strikethrough<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
@@ -167,7 +179,6 @@ where
         .map(|v| BlockExprNode::Strikethrough(v))
         .message("while parsing strikethrough")
 }
-
 
 fn heading<Input>() -> impl Parser<Input, Output = AstNode>
 where
@@ -195,7 +206,13 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    choice!(attempt(heading()), directive(), horiz_rule(), ast_block_expr_node())
+    choice!(
+        attempt(heading()),
+        attempt(source_block()),
+        directive(),
+        horiz_rule(),
+        ast_block_expr_node()
+    )
 }
 
 pub fn org_file<Input>() -> impl Parser<Input, Output = AbstractSyntaxTree>

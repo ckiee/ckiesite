@@ -13,3 +13,11 @@ yeah this has some text
 maybe even a /few/ *lines*?
 
 now this has some spacing *yay*
+* markup
+To markup text in Org, simply surround it with one or more marker characters. *Bold*, /italic/ and _underline_ are fairly intuitive, and the ability to use +strikethrough+ is a plus.  You can _/*combine*/_ the basic markup in any order, however ~code~ and =verbatim= need to be the *_~inner-most~_* markers if they are present since their contents are interpreted =_literally_=.
+
+#+BEGIN_SRC rust
+fn main() {
+    println!("Hello world!")
+}
+#+END_SRC
