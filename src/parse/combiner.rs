@@ -68,12 +68,12 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     (
-        string("#+BEGIN_SRC"),
-        whitespaces(),
-        many1(alpha_num()),
+        string("#+BEGIN_SRC"),              // #+BEGIN_SRC
+        whitespaces(),                      //
+        many1(alpha_num()),                 // rust
         newline(),
-        take_until(string("#+END_SRC")),
-        string("#+END_SRC"),
+        take_until(string("#+END_SRC")),    // fn main() {}
+        string("#+END_SRC"),                // #+END_SRC
     )
         .map(|(_, _, language, _, code, _)| AstNode::SourceBlock { language, code })
         .message("while parsing source block")
