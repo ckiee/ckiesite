@@ -486,4 +486,3 @@ fn parses_blockexpr_formatting() -> Result<()> {
     );
     Ok(())
 }
-// TODO parse more BlockExprs: bold, italics, ..
