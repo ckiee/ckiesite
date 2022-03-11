@@ -387,27 +387,13 @@ fn parses_blockexpr_formatting() -> Result<()> {
                 BlockExprNode::Char('e'),
                 BlockExprNode::Char('r'),
                 BlockExprNode::Char(' '),
-                BlockExprNode::Char('~'),
-                BlockExprNode::Char('c'),
-                BlockExprNode::Char('o'),
-                BlockExprNode::Char('d'),
-                BlockExprNode::Char('e'),
-                BlockExprNode::Char('~'),
+                BlockExprNode::Code("code".to_string()),
                 BlockExprNode::Char(' '),
                 BlockExprNode::Char('a'),
                 BlockExprNode::Char('n'),
                 BlockExprNode::Char('d'),
                 BlockExprNode::Char(' '),
-                BlockExprNode::Char('='),
-                BlockExprNode::Char('v'),
-                BlockExprNode::Char('e'),
-                BlockExprNode::Char('r'),
-                BlockExprNode::Char('b'),
-                BlockExprNode::Char('a'),
-                BlockExprNode::Char('t'),
-                BlockExprNode::Char('i'),
-                BlockExprNode::Char('m'),
-                BlockExprNode::Char('='),
+                BlockExprNode::Code("verbatim".to_string()),
                 BlockExprNode::Char(' '),
                 BlockExprNode::Char('n'),
                 BlockExprNode::Char('e'),
@@ -425,18 +411,7 @@ fn parses_blockexpr_formatting() -> Result<()> {
                 BlockExprNode::Char('e'),
                 BlockExprNode::Char(' '),
                 BlockExprNode::Bold(vec![BlockExprNode::Underline(vec![
-                    BlockExprNode::Char('~'),
-                    BlockExprNode::Char('i'),
-                    BlockExprNode::Char('n'),
-                    BlockExprNode::Char('n'),
-                    BlockExprNode::Char('e'),
-                    BlockExprNode::Char('r'),
-                    BlockExprNode::Char('-'),
-                    BlockExprNode::Char('m'),
-                    BlockExprNode::Char('o'),
-                    BlockExprNode::Char('s'),
-                    BlockExprNode::Char('t'),
-                    BlockExprNode::Char('~')
+                    BlockExprNode::Code("inner-most".to_string())
                 ])]),
                 BlockExprNode::Char(' '),
                 BlockExprNode::Char('m'),
@@ -504,24 +479,11 @@ fn parses_blockexpr_formatting() -> Result<()> {
                 BlockExprNode::Char('e'),
                 BlockExprNode::Char('d'),
                 BlockExprNode::Char(' '),
-                BlockExprNode::Char('='),
-                BlockExprNode::Underline(vec![
-                    BlockExprNode::Char('l'),
-                    BlockExprNode::Char('i'),
-                    BlockExprNode::Char('t'),
-                    BlockExprNode::Char('e'),
-                    BlockExprNode::Char('r'),
-                    BlockExprNode::Char('a'),
-                    BlockExprNode::Char('l'),
-                    BlockExprNode::Char('l'),
-                    BlockExprNode::Char('y')
-                ]),
-                BlockExprNode::Char('='),
+                BlockExprNode::Code("_literally_".to_string()),
                 BlockExprNode::Char('.')
             ]
         )]
     );
-    // TODO check if ~code~ parses literally so ~*helo*~ doesn't have a BlockExprNode::Bold
     Ok(())
 }
 // TODO parse more BlockExprs: bold, italics, ..
