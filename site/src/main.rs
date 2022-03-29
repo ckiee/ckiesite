@@ -30,7 +30,11 @@ impl IntoResponse for Error {
 struct Args {
     /// HTTP listening port
     #[clap(short, long, default_value_t = 13337)]
-    port: u16
+    port: u16,
+
+    /// Listen on all interfaces instead of loopback
+    #[clap(short, long)]
+    everywhere: bool
 }
 
 // TODO index.html
@@ -53,7 +57,11 @@ async fn main() -> anyhow::Result<()> {
         }))
         .fallback(fallback_handler.into_service());
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], args.port));
+    let addr = SocketAddr::from((if args.everywhere {
+        [0, 0, 0, 0]
+    } else {
+        [127, 0, 0, 1]
+    }, args.port));
     debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
