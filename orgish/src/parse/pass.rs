@@ -83,6 +83,27 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
             //         debug!("BET in BEN::Link {:#?}", bet);
             //         out.push(BlockExprNode::Link(link.to_string(), bet_pass(&mut bet.iter().peekable(), state.inside_nbsp())))
             //     },
+
+            BlockExprNode::Bold(bet) => out.push(BlockExprNode::Bold(bet_pass(
+                &mut bet.iter().peekable(),
+                state,
+            ))),
+            BlockExprNode::Italic(bet) => out.push(BlockExprNode::Italic(bet_pass(
+                &mut bet.iter().peekable(),
+                state,
+            ))),
+            BlockExprNode::Underline(bet) => out.push(BlockExprNode::Underline(bet_pass(
+                &mut bet.iter().peekable(),
+                state,
+            ))),
+            BlockExprNode::Strikethrough(bet) => out.push(BlockExprNode::Strikethrough(bet_pass(
+                &mut bet.iter().peekable(),
+                state,
+            ))),
+            BlockExprNode::Link(url, bet) => out.push(BlockExprNode::Link(
+                url.to_string(),
+                bet_pass(&mut bet.iter().peekable(), state),
+            )),
             other => out.push(other.clone()),
         }
     }
