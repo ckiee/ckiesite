@@ -2,7 +2,7 @@
 /// This module walks the AST and outputs HTML.
 /// It is all BAD and EVIL since it assumes the input is safe. This is okay for now, but TODO.
 ///
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
 use crate::parse::{AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType};
@@ -66,23 +66,24 @@ fn bet_to_html_string(nodes: &BlockExprTree) -> Result<String> {
 }
 
 fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
-    Ok(match node {
-        BlockExprNode::Bold(bet) => format!("<strong>{}</strong>", bet_to_html_string(bet)?),
-        BlockExprNode::Char(c) => c.to_string(),
-        BlockExprNode::Linespace | BlockExprNode::NonbreakingSpace(_) => {
-            panic!("illegal node; parser pass should have eliminated all linespaces")
-        }
-        BlockExprNode::Italic(bet) => format!("<em>{}</em>", bet_to_html_string(bet)?),
-        BlockExprNode::Underline(bet) => format!(
+    match node {
+        BlockExprNode::Bold(bet) => Ok(format!("<strong>{}</strong>", bet_to_html_string(bet)?)),
+        BlockExprNode::Char(c) => Ok(c.to_string()),
+        BlockExprNode::Linespace | BlockExprNode::NonbreakingSpace(_) => Err(anyhow!(
+            "illegal node {:?}; parser pass should have eliminated this",
+            node
+        )),
+        BlockExprNode::Italic(bet) => Ok(format!("<em>{}</em>", bet_to_html_string(bet)?)),
+        BlockExprNode::Underline(bet) => Ok(format!(
             "<span class=\"underline\">{}</span>",
             bet_to_html_string(bet)?
-        ),
-        BlockExprNode::Strikethrough(bet) => {
-            format!("<del>{}</del>", bet_to_html_string(bet)?)
-        }
-        BlockExprNode::Code(verbatim) => format!(r#"<span class="code">{}</span>"#, verbatim),
-        BlockExprNode::Link(url, bet) => {
-            format!(r#"<a href="{}">{}</a>"#, url, bet_to_html_string(bet)?)
-        }
-    })
+        )),
+        BlockExprNode::Strikethrough(bet) => Ok(format!("<del>{}</del>", bet_to_html_string(bet)?)),
+        BlockExprNode::Code(verbatim) => Ok(format!(r#"<span class="code">{}</span>"#, verbatim)),
+        BlockExprNode::Link(url, bet) => Ok(format!(
+            r#"<a href="{}">{}</a>"#,
+            url,
+            bet_to_html_string(bet)?
+        )),
+    }
 }

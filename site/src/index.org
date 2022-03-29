@@ -10,6 +10,6 @@ I have no idea, it's changed a bit over the years but I don't remember why I pic
 *** talk to me!
 i am online way too much. send a dm or join [[https://celeste.exposed/dictator/][this discord server]].
 ** what do you do
-Sometimes I make things. This website is being served to you with a few thousand lines of Rust since I wrote a good-enough-for-me parser for [[https://orgmode.org/][Org Mode]].
+Sometimes I make things. This website is being served to you with a few thousand lines of Rust since I wrote a good-enough-for-me parser for [[https://orgmode.org/][nbsp&Org Mode&nbsp]].
 *** /things???/
 Yes. Things. Mostly Rust, TypeScript and Nix. [[https://github.com/ckiee/ckiesite-rs][Here's this site.]]
