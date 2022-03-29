@@ -1,5 +1,7 @@
 use std::{iter::Peekable, slice::Iter};
 
+use tracing::debug;
+
 use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree};
 
 pub enum StopAt {
@@ -35,9 +37,10 @@ pub fn flat_nodes_to_tree(
             // Optimization: Linespace is not very useful in the final AST
             AstNode::Block(_, bet) if bet == &vec![BlockExprNode::Linespace] => {}
 
-            AstNode::Block(ty, bet) => {
-                out.push(AstNode::Block(ty.clone(), bet_pass(&mut bet.iter().peekable(), &mut Default::default())))
-            }
+            AstNode::Block(ty, bet) => out.push(AstNode::Block(
+                ty.clone(),
+                bet_pass(&mut bet.iter().peekable(), &mut Default::default()),
+            )),
 
             other => out.push(other.clone()),
         }
@@ -46,9 +49,10 @@ pub fn flat_nodes_to_tree(
     out
 }
 
-
 #[derive(Default)]
-struct BetPassState { inside_nbsp: bool }
+struct BetPassState {
+    inside_nbsp: bool,
+}
 
 impl BetPassState {
     fn inside_nbsp(&mut self) -> &mut Self {
@@ -61,8 +65,24 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
     let mut out: BlockExprTree = vec![];
     while let Some(node) = nodes.next() {
         match node {
-            BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(&mut bet.iter().peekable(), state.inside_nbsp())),
-            BlockExprNode::Char(' ') if state.inside_nbsp => out.push(BlockExprNode::Char('\u{20}')),
+            BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(
+                &mut bet.iter().peekable(),
+                state.inside_nbsp(),
+            )),
+            BlockExprNode::Char(' ') if state.inside_nbsp => {
+                out.push(BlockExprNode::Char('\u{20}'))
+            }
+            // hey hey, wouldn't it be neat if links like "Org Mode" wouldn't wrap around?
+            // we don't really have to add a BEN::NbSp(), which is a bit weird ~~but skips a 2nd pass!~~
+            // This doesn't work because I forgot that we have to recurse `bet`. Oops, TODO.
+            // BlockExprNode::Link(link, bet)
+            //     if bet.all(|s| {match s.chars().next() {
+            //         None => false,
+            //         Some(ch) => ch.is_uppercase(),
+            //     }}) => {
+            //         debug!("BET in BEN::Link {:#?}", bet);
+            //         out.push(BlockExprNode::Link(link.to_string(), bet_pass(&mut bet.iter().peekable(), state.inside_nbsp())))
+            //     },
             other => out.push(other.clone()),
         }
     }
