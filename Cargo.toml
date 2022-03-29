@@ -1,5 +1,5 @@
 [workspace]
-
 members = [
-    "orgish"
+    "orgish",
+    "site"
 ]

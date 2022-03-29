@@ -6,7 +6,7 @@ use std::{
     io::{self, Read},
 };
 
-use ckiesite::{parse::parse_n_pass, treewalk::ast_to_html_string, template::make_article_html};
+use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string, template::make_article_html};
 
 fn main() -> Result<()> {
     let mut args = env::args().into_iter().peekable();

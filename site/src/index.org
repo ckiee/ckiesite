@@ -1,0 +1,13 @@
+#+TITLE: Index
+
+* hi
+this is my /new new new new/ website. it is different from the other ones since it's no longer just some dumb static files.
+** who are you
+I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/05f73e74a54bbb3e52e3028528765ea7615173e8/modules/services/mailserver/util.nix#L17][a lot of places]].
+- [[][=@ckiee= on Github]]
+- [[][=@ckie:ckie.dev= on Matrix]]
+- And, [[https://artemis.sh/2022/01/30/discord-holds-the-keys-to-your-heart.html][if you must]], =ckie#8697= on Discord.
+*** how'd you get the name "cookie"
+I have no idea, it's changed a bit over the years but I don't remember why I picked the /c o o k i e/ specifically.
+** what do you do
+Sometimes I make things. This website is being served to you with a few thousand lines of Rust since I wrote a good-enough-for-me parser for [[https://orgmode.org/][Org Mode]].

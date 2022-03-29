@@ -1,3 +1,7 @@
+///
+/// This module walks the AST and outputs HTML.
+/// It is all BAD and EVIL since it assumes the input is safe. This is okay for now, but TODO.
+///
 use anyhow::Result;
 use syntect::{
     highlighting::ThemeSet,
@@ -7,9 +11,6 @@ use syntect::{
     parsing::SyntaxSet,
 };
 
-///
-/// This module walks the AST and outputs HTML.
-///
 use crate::parse::{AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType};
 
 pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> Result<String> {
@@ -87,5 +88,8 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
             format!("<del>{}</del>", bet_to_html_string(bet)?)
         }
         BlockExprNode::Code(verbatim) => format!(r#"<span class="code">{}</span>"#, verbatim),
+        BlockExprNode::Link(url, bet) => {
+            format!(r#"<a href="{}">{}</a>"#, url, bet_to_html_string(bet)?)
+        }
     })
 }

@@ -229,7 +229,7 @@ where
         attempt(heading()),
         attempt(source_block()),
         directive(),
-        horiz_rule(),
+        attempt(horiz_rule()), // TODO remove attempt once we add list item
         ast_block_expr_node()
     )
 }

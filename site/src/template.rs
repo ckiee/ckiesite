@@ -1,10 +1,10 @@
-use typed_html::{dom::DOMTree, html, unsafe_text};
+use typed_html::{dom::DOMTree, html, unsafe_text, text};
 
-pub fn make_article_html(content: &str) -> String {
+pub fn make_article_html(title: &str, content: &str) -> String {
     let doc: DOMTree<String> = html!(
         <html>
             <head>
-                <title>"TODO"</title>
+            <title>{ text!(title) }</title>
             <style>
 "body {
   margin: 40px auto;
