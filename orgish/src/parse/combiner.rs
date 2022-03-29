@@ -98,6 +98,7 @@ where
         choice!(
             link(),
             inline_code(),
+            attempt(nbsp()),
             bold(),
             italic(),
             underline(),
@@ -131,17 +132,20 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    marker_chars(ch, ch)
+    marker_chars(token(ch), Box::new(move || token(ch)))
 }
 
-fn marker_chars<Input>(start: char, end: char) -> impl Parser<Input, Output = BlockExprTree>
+// Avoid trying to use Copy or Clone https://github.com/Marwes/combine/issues/283#issuecomment-658779127
+fn marker_chars<Input, P: Parser<Input>>(start: P, end: Box<dyn Fn() -> P>) -> impl Parser<Input, Output = BlockExprTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
+    let end_1 = end();
+    let end_2 = end();
     (
-        token(start),
-        take_until::<String, _, _>(token(end)).flat_map(|s| {
+        start,
+        take_until::<String, _, _>(end_1).flat_map(|s| {
             // HACK ouch ouch ouch
             Ok(many1(block_expr_node())
                 .easy_parse(position::Stream::new(&s[..]))
@@ -150,7 +154,7 @@ where
                 .expect("In marker_char subparser")
                 .0)
         }),
-        token(end),
+        end_2,
     )
         .map(|(_, v, _)| v)
         .message("while parsing marker_chars")
@@ -215,6 +219,18 @@ where
         .message("while parsing strikethrough")
 }
 
+
+fn nbsp<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    marker_chars(string("nbsp&"), Box::new(|| string("&nbsp")))
+        .map(BlockExprNode::NonbreakingSpace)
+        .message("while parsing nbsp")
+}
+
+
 fn link<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
@@ -226,7 +242,7 @@ where
         take_until::<String, _, _>(token(']')), // https://ckie.dev
         optional((
             token(']'),
-            marker_chars('[', ']'),             // [<BET>]
+            marker_chars(token('['), Box::new(|| token(']'))),             // [<BET>]
             token(']'),
         )),
     )

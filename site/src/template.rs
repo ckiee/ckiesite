@@ -8,7 +8,7 @@ pub fn make_article_html(title: &str, content: &str) -> String {
             <style>
 "body {
   margin: 2vw auto;
-  max-width: 40vw;
+  max-width: 650px;
   line-height: 1.6;
   font-size: 18px;
   padding: 0 10px;

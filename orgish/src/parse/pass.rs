@@ -1,6 +1,6 @@
 use std::{iter::Peekable, slice::Iter};
 
-use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode};
+use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree};
 
 pub enum StopAt {
     NextHeadingWithLevel(u16),
@@ -28,12 +28,41 @@ pub fn flat_nodes_to_tree(
                 title,
             } => out.push(AstNode::Heading {
                 level: *level,
-                title: title.clone(),
+                title: bet_pass(&mut title.iter().peekable(), &mut Default::default()),
                 children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level)),
             }),
 
             // Optimization: Linespace is not very useful in the final AST
             AstNode::Block(_, bet) if bet == &vec![BlockExprNode::Linespace] => {}
+
+            AstNode::Block(ty, bet) => {
+                out.push(AstNode::Block(ty.clone(), bet_pass(&mut bet.iter().peekable(), &mut Default::default())))
+            }
+
+            other => out.push(other.clone()),
+        }
+    }
+
+    out
+}
+
+
+#[derive(Default)]
+struct BetPassState { inside_nbsp: bool }
+
+impl BetPassState {
+    fn inside_nbsp(&mut self) -> &mut Self {
+        self.inside_nbsp = true;
+        self
+    }
+}
+
+fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState) -> BlockExprTree {
+    let mut out: BlockExprTree = vec![];
+    while let Some(node) = nodes.next() {
+        match node {
+            BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(&mut bet.iter().peekable(), state.inside_nbsp())),
+            BlockExprNode::Char(' ') if state.inside_nbsp => out.push(BlockExprNode::Char('\u{20}')),
             other => out.push(other.clone()),
         }
     }

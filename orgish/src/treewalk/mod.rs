@@ -3,13 +3,7 @@
 /// It is all BAD and EVIL since it assumes the input is safe. This is okay for now, but TODO.
 ///
 use anyhow::Result;
-use syntect::{
-    highlighting::ThemeSet,
-    html::{
-        highlighted_html_for_string,
-    },
-    parsing::SyntaxSet,
-};
+use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
 use crate::parse::{AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType};
 
@@ -57,7 +51,6 @@ fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
             let theme_set = ThemeSet::load_defaults();
             let theme = theme_set.themes.get("base16-ocean.light").unwrap();
 
-            
             highlighted_html_for_string(code, &syntax_set, syntax, theme)
         }
     })
@@ -76,7 +69,7 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
     Ok(match node {
         BlockExprNode::Bold(bet) => format!("<strong>{}</strong>", bet_to_html_string(bet)?),
         BlockExprNode::Char(c) => c.to_string(),
-        BlockExprNode::Linespace => {
+        BlockExprNode::Linespace | BlockExprNode::NonbreakingSpace(_) => {
             panic!("illegal node; parser pass should have eliminated all linespaces")
         }
         BlockExprNode::Italic(bet) => format!("<em>{}</em>", bet_to_html_string(bet)?),

@@ -6,7 +6,7 @@ I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/05f73e74a54bbb3e52
 - [[https://matrix.to/#/@ckie:ckie.dev][=@ckie:ckie.dev= on Matrix]]
 - And, [[https://artemis.sh/2022/01/30/discord-holds-the-keys-to-your-heart.html][if you must]], =ckie#8697= on Discord.
 *** how'd you get the name "cookie"
-I have no idea, it's changed a bit over the years but I don't remember why I picked the /c o o k i e/ specifically.
+I have no idea, it's changed a bit over the years but I don't remember why I picked the nbsp&/c o o k i e/&nbsp specifically.
 *** talk to me!
 i am online way too much. send a dm or join [[https://celeste.exposed/dictator/][this discord server]].
 ** what do you do
