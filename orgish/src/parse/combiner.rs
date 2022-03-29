@@ -1,5 +1,5 @@
 use combine::{
-    attempt, between, choice, many1, opaque,
+    attempt, between, choice, many1, opaque, optional,
     parser::char::{alpha_num, newline},
     parser::{
         char::string,
@@ -68,12 +68,12 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     (
-        string("#+BEGIN_SRC"),              // #+BEGIN_SRC
-        whitespaces(),                      //
-        many1(alpha_num()),                 // rust
+        string("#+BEGIN_SRC"), // #+BEGIN_SRC
+        whitespaces(),         //
+        many1(alpha_num()),    // rust
         newline(),
-        take_until(string("#+END_SRC")),    // fn main() {}
-        string("#+END_SRC"),                // #+END_SRC
+        take_until(string("#+END_SRC")), // fn main() {}
+        string("#+END_SRC"),             // #+END_SRC
     )
         .map(|(_, _, language, _, code, _)| AstNode::SourceBlock { language, code })
         .message("while parsing source block")
@@ -95,8 +95,16 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     opaque!(no_partial(
-        choice!(inline_code(), bold(), italic(), underline(), strikethrough(), char())
-            .message("while parsing block_expr_node")
+        choice!(
+            link(),
+            inline_code(),
+            bold(),
+            italic(),
+            underline(),
+            strikethrough(),
+            char()
+        )
+        .message("while parsing block_expr_node")
     ))
 }
 
@@ -118,14 +126,22 @@ where
         .message("while parsing char")
 }
 
-fn marker_char<Input>(marker: char) -> impl Parser<Input, Output = BlockExprTree>
+fn marker_char<Input>(ch: char) -> impl Parser<Input, Output = BlockExprTree>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    marker_chars(ch, ch)
+}
+
+fn marker_chars<Input>(start: char, end: char) -> impl Parser<Input, Output = BlockExprTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     (
-        token(marker),
-        take_until::<String, _, _>(token(marker)).flat_map(|s| {
+        token(start),
+        take_until::<String, _, _>(token(end)).flat_map(|s| {
             // HACK ouch ouch ouch
             Ok(many1(block_expr_node())
                 .easy_parse(position::Stream::new(&s[..]))
@@ -134,12 +150,11 @@ where
                 .expect("In marker_char subparser")
                 .0)
         }),
-        token(marker),
+        token(end),
     )
         .map(|(_, v, _)| v)
-        .message("while parsing marker_char")
+        .message("while parsing marker_chars")
 }
-
 
 fn inline_code<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
@@ -147,7 +162,9 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     macro_rules! stupid_marker {
-        () => { token('=').or(token('~')) };
+        () => {
+            token('=').or(token('~'))
+        };
     }
     (
         stupid_marker!(),
@@ -157,7 +174,6 @@ where
         .map(|(_, c, _)| BlockExprNode::Code(c))
         .message("while parsing inline_code")
 }
-
 
 fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
@@ -199,6 +215,27 @@ where
         .message("while parsing strikethrough")
 }
 
+fn link<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token('['),                             // [[https://ckie.dev][some /text/ with BENs]]
+        token('['),                             // [https://ckie.dev]
+        take_until::<String, _, _>(token(']')), // https://ckie.dev
+        optional((
+            token(']'),
+            marker_chars('[', ']'),             // [<BET>]
+            token(']'),
+        )),
+    )
+        .map(|(_, _, link, maybe_bet)| {
+            BlockExprNode::Link(link, maybe_bet.map(|s| s.1).unwrap_or(vec![])) // TODO implement this case properly (rec-parse like marker_char)
+        })
+        .message("while parsing link")
+}
+
 fn heading<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
@@ -229,7 +266,10 @@ where
         attempt(heading()),
         attempt(source_block()),
         directive(),
-        attempt(horiz_rule()), // TODO remove attempt once we add list item
+        // HACK this attempt() isn't really ideal,
+        // but it's worth the exact runtime perf for the code encapsulation for now.
+        // (BEN link needs to be parsed before ASN horiz_rule)
+        attempt(horiz_rule()),
         ast_block_expr_node()
     )
 }
