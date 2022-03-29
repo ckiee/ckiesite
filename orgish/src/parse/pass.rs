@@ -64,14 +64,16 @@ impl BetPassState {
 fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState) -> BlockExprTree {
     let mut out: BlockExprTree = vec![];
     while let Some(node) = nodes.next() {
+        debug!("bet_pass: {:?}", &node);
         match node {
             BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(
                 &mut bet.iter().peekable(),
                 state.inside_nbsp(),
             )),
             BlockExprNode::Char(' ') if state.inside_nbsp => {
-                out.push(BlockExprNode::Char('\u{20}'))
+                out.push(BlockExprNode::Char('\u{a0}'))
             }
+
             // hey hey, wouldn't it be neat if links like "Org Mode" wouldn't wrap around?
             // we don't really have to add a BEN::NbSp(), which is a bit weird ~~but skips a 2nd pass!~~
             // This doesn't work because I forgot that we have to recurse `bet`. Oops, TODO.

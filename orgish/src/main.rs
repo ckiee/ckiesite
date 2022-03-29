@@ -1,12 +1,11 @@
 use anyhow::Result;
-use html_minifier::HTMLMinifier;
 use std::{
     env,
     fs::File,
     io::{self, Read},
 };
 
-use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string, template::make_article_html};
+use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string};
 
 fn main() -> Result<()> {
     let mut args = env::args().into_iter().peekable();
@@ -40,14 +39,8 @@ fn main() -> Result<()> {
     }
 
     let html = ast_to_html_string(&ast)?;
-    let templated = make_article_html(&html);
-    let minified = {
-        let mut mf = HTMLMinifier::new();
-        mf.digest(&templated)?;
-        String::from_utf8(mf.get_html().to_vec())?
-    };
 
-    println!("{}", minified);
+    println!("{}", html);
 
     Ok(())
 }

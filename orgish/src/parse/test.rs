@@ -410,9 +410,9 @@ fn parses_blockexpr_formatting() -> Result<()> {
                 BlockExprNode::Char('h'),
                 BlockExprNode::Char('e'),
                 BlockExprNode::Char(' '),
-                BlockExprNode::Bold(vec![BlockExprNode::Underline(vec![
-                    BlockExprNode::Code("inner-most".to_string())
-                ])]),
+                BlockExprNode::Bold(vec![BlockExprNode::Underline(vec![BlockExprNode::Code(
+                    "inner-most".to_string()
+                )])]),
                 BlockExprNode::Char(' '),
                 BlockExprNode::Char('m'),
                 BlockExprNode::Char('a'),
@@ -482,6 +482,31 @@ fn parses_blockexpr_formatting() -> Result<()> {
                 BlockExprNode::Code("_literally_".to_string()),
                 BlockExprNode::Char('.')
             ]
+        )]
+    );
+    Ok(())
+}
+
+#[test]
+fn parses_nbsp() -> Result<()> {
+    let sp_char = BlockExprNode::Char(' ');
+    let nbsp_char = BlockExprNode::Char('\u{a0}');
+    assert_eq!(
+        parse_n_pass("nbsp&h h&nbsp\n")?,
+        vec![AstNode::Block(
+            BlockType::Block,
+            vec![
+                BlockExprNode::Char('h'),
+                nbsp_char,
+                BlockExprNode::Char('h')
+            ]
+        )]
+    );
+    assert_eq!(
+        parse_n_pass("h h\n")?,
+        vec![AstNode::Block(
+            BlockType::Block,
+            vec![BlockExprNode::Char('h'), sp_char, BlockExprNode::Char('h')]
         )]
     );
     Ok(())
