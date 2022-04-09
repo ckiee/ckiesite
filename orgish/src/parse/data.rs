@@ -4,7 +4,7 @@ pub enum AstNode {
         language: String,
         code: String,
     },
-    Directive(String, String),
+    Directive(Directive),
     /// Equivalent to html <hx>
     Heading {
         level: u16,
@@ -34,6 +34,14 @@ pub enum BlockExprNode {
 pub enum BlockType {
     Block,
     Inline,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Directive {
+    Id(String),
+    Title(String),
+    /// Pre-pass datatype
+    Raw(String, String)
 }
 
 impl BlockExprNode {

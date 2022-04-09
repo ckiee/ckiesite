@@ -14,7 +14,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockExprTree, BlockType,
+    AbstractSyntaxTree, BlockExprTree, BlockType, Directive,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -58,7 +58,7 @@ where
         whitespaces(),
         many1(satisfy(|c: char| !c.is_control())),
     )
-        .map(|(key, _, value)| AstNode::Directive(key, value))
+        .map(|(key, _, value)| AstNode::Directive(Directive::Raw(key, value)))
         .message("while parsing directive")
 }
 

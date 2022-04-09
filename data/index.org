@@ -8,7 +8,7 @@ I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/05f73e74a54bbb3e52
 *** how'd you get the name "cookie"
 I have no idea, it's changed a bit over the years but I don't remember why I picked the nbsp&/c o o k i e/&nbsp specifically.
 *** talk to me!
-i am online way too much. send a dm or join [[https://celeste.exposed/dictator/][this discord server]].
+i am online way too much. maybe send an email? =us@ckie.dev=
 ** what do you do
 Sometimes I make things. This website is being served to you with a few thousand lines of Rust since I wrote a good-enough-for-me parser for [[https://orgmode.org/][nbsp&Org Mode&nbsp]].
 *** /things???/

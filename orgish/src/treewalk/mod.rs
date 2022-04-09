@@ -5,7 +5,7 @@
 use anyhow::{anyhow, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
-use crate::parse::{AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType};
+use crate::parse::{AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive};
 
 pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> Result<String> {
     let mut buf = String::with_capacity(4096);
@@ -17,11 +17,11 @@ pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> Result<String> {
 
 fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
     Ok(match node {
-        // HACK A bit messy. We should probably have a separate pass for directives and an out-of-AST map
-        AstNode::Directive(title, value) if title.eq_ignore_ascii_case("title") => {
-            format!("<h1>{}</h1>", value)
-        }
-        AstNode::Directive(_, _) => unimplemented!(), // TODO impl
+        AstNode::Directive(d) => match d {
+            Directive::Raw(_, _) => unreachable!(),
+            // TODO Meh, maybe return Result<Option<String>>
+            _ => "".to_string()
+        },
         AstNode::Heading {
             children,
             level,

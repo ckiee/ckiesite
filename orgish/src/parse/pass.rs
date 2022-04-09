@@ -2,7 +2,7 @@ use std::{iter::Peekable, slice::Iter};
 
 use tracing::debug;
 
-use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree};
+use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive};
 
 pub enum StopAt {
     NextHeadingWithLevel(u16),
@@ -42,6 +42,22 @@ pub fn flat_nodes_to_tree(
                 bet_pass(&mut bet.iter().peekable(), &mut Default::default()),
             )),
 
+            AstNode::Directive(dir) => {
+                match dir {
+                    Directive::Raw(k, v) => {
+                        match match k.to_lowercase().as_str() {
+                            "id" => Some(Directive::Id(v.to_string())),
+                            "title" => Some(Directive::Title(v.to_string())),
+                            _ => None
+                        } {
+                            None => {},
+                            Some(dir) => out.push(AstNode::Directive(dir))
+                        };
+                    },
+                    _ => unreachable!()
+                }
+            }
+
             other => out.push(other.clone()),
         }
     }
@@ -64,7 +80,7 @@ impl BetPassState {
 fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState) -> BlockExprTree {
     let mut out: BlockExprTree = vec![];
     while let Some(node) = nodes.next() {
-        debug!("bet_pass: {:?}", &node);
+        // debug!("bet_pass: {:?}", &node);
         match node {
             BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(
                 &mut bet.iter().peekable(),

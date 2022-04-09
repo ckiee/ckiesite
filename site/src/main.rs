@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 use axum::{Router, response::{Html, IntoResponse, Response}, routing::{get, get_service}, http::StatusCode, handler::Handler};
+use document::Document;
 use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string};
 use clap::Parser;
 use template::make_article_html;
@@ -8,6 +9,7 @@ use tracing::{debug, error};
 use tower_http::services::ServeDir;
 
 mod template;
+pub mod document;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -37,7 +39,6 @@ struct Args {
     everywhere: bool
 }
 
-// TODO index.html
 // TODO compile all the posts' raw content and cache that in memory
 // TODO serve posts
 #[tokio::main]
@@ -71,7 +72,8 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn root_unauthenticated() -> Result<impl IntoResponse> {
-    Ok(Html(make_article_html("ckie.dev", &ast_to_html_string(&parse_n_pass(include_str!("./index.org"))?)?)))
+    let doc = Document::from_org_file("data/index.org").await?;
+    Ok(Html(doc.render_page_html()?))
 }
 
 async fn fallback_handler() -> impl IntoResponse {

@@ -6,34 +6,46 @@ pub fn make_article_html(title: &str, content: &str) -> String {
             <head>
             <title>{ text!(title) }</title>
             <style>
+
 "body {
-  margin: 2vw auto;
-  max-width: 650px;
-  line-height: 1.6;
-  font-size: 18px;
-  padding: 0 10px;
+    margin: 2vw auto;
+    max-width: 650px;
+    line-height: 1.6;
+    font-size: 18px;
+    padding: 0 10px;
 }
 html {
-  color: #444;
-  background: #EEEEEE;
+    color: #444;
+    background: #EEEEEE;
 }
 h1, h2, h3, h4, h5, h6 {
-  line-height: 1.2;
+    line-height: 1.2;
 }
 span.underline {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 span.code {
-  font-family: monospace;
+    font-family: monospace;
+}
+header {
+    display: flex;
+    gap: 1em;
 }
 "
+
             </style>
             </head>
+
             <body>
+                <header>
+                    <p>"hi"</p>
+                </header>
+
                 <main>
                     { unsafe_text!(content) }
                 </main>
             </body>
+
         </html>
     );
 
