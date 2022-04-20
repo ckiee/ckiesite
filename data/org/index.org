@@ -1,14 +1,19 @@
-#+TITLE: hi
+# This file contains the whole blog. Just one file. Easier to serve properly.
+* hi
+:/:
 this is my /new new new new/ website. it is different from the other ones since it's no longer just some dumb static files.
+** :nav:
+# TODO add links to other pages here, no conditional yet
 ** who are you
-I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/05f73e74a54bbb3e52e3028528765ea7615173e8/modules/services/mailserver/util.nix#L17][a lot of places]].
+I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix][a lot of places]].
 - [[https://github.com/ckiee][=@ckiee= on Github]]
 - [[https://matrix.to/#/@ckie:ckie.dev][=@ckie:ckie.dev= on Matrix]]
-- And, [[https://artemis.sh/2022/01/30/discord-holds-the-keys-to-your-heart.html][if you must]], =ckie#8697= on Discord.
 *** how'd you get the name "cookie"
 I have no idea, it's changed a bit over the years but I don't remember why I picked the nbsp&/c o o k i e/&nbsp specifically.
 *** talk to me!
 i am online way too much. maybe send an email? =us@ckie.dev=
+** this site
+this site has no index listing. as you explore, the content will change with you.
 ** what do you do
 Sometimes I make things. This website is being served to you with a few thousand lines of Rust since I wrote a good-enough-for-me parser for [[https://orgmode.org/][nbsp&Org Mode&nbsp]].
 *** /things???/
