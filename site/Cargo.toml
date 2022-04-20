@@ -19,3 +19,6 @@ thiserror = "1.0.30"
 hyper = { version = "0.14.18", features = [ "full" ] }
 tower = { version = "0.4.12", features = [ "full" ] }
 tower-http = { version = "0.2.5", features = [ "fs" ] }
+cap-std = "0.24.2"
+lazy_static = "1.4.0"
+include_dir = "0.7.2"

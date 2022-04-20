@@ -1,23 +1,33 @@
-use std::{net::SocketAddr, str::FromStr};
-use axum::{Router, response::{Html, IntoResponse, Response}, routing::{get, get_service}, http::{StatusCode, uri::PathAndQuery}, handler::Handler, extract::Path, middleware::{Next, self}};
+use anyhow::anyhow;
+use include_dir::{Dir,include_dir};
+use lazy_static::lazy_static;
+use axum::{
+    extract::Path,
+    handler::Handler,
+    http::{uri::PathAndQuery, StatusCode},
+    middleware::{self, Next},
+    response::{Html, IntoResponse, Response},
+    routing::{get, get_service},
+    Router,
+};
+use clap::Parser;
 use document::Document;
 use hyper::{Request, Uri};
 use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string};
-use clap::Parser;
+use std::{net::SocketAddr, str::FromStr};
 use template::make_article_html;
 use thiserror::Error;
 use tower::Layer;
-use tracing::{debug, error};
 use tower_http::services::ServeDir;
-use anyhow::anyhow;
+use tracing::{debug, error};
 
-mod template;
 pub mod document;
+mod template;
 
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    Anyhow(#[from] anyhow::Error)
+    Anyhow(#[from] anyhow::Error),
 }
 
 type Result<A> = std::result::Result<A, Error>;
@@ -25,7 +35,11 @@ type Result<A> = std::result::Result<A, Error>;
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         error!("error while serving request: {:#?}", &self);
-        (StatusCode::INTERNAL_SERVER_ERROR, "internal server error ):").into_response()
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "internal server error ):",
+        )
+            .into_response()
     }
 }
 
@@ -39,33 +53,35 @@ struct Args {
 
     /// Listen on all interfaces instead of loopback
     #[clap(short, long)]
-    everywhere: bool
+    everywhere: bool,
 }
 
 // TODO compile all the posts' raw content and cache that in memory
 // TODO serve posts
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     let args = Args::parse();
     tracing_subscriber::fmt::init(); // loggy log, set RUST_LOG=debug
 
     let error_handler = |e: std::io::Error| async move {
-            error!("io error while serving static data: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "io error while serving static data"
-            )
-        };
+        error!("io error while serving static data: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "io error while serving static data",
+        )
+    };
 
     let app = Router::new()
-        .nest("/static", get_service(ServeDir::new("./data/static")).handle_error(error_handler))
         .fallback(fallback_handler.into_service());
 
-    let addr = SocketAddr::from((if args.everywhere {
-        [0, 0, 0, 0]
-    } else {
-        [127, 0, 0, 1]
-    }, args.port));
+    let addr = SocketAddr::from((
+        if args.everywhere {
+            [0, 0, 0, 0]
+        } else {
+            [127, 0, 0, 1]
+        },
+        args.port,
+    ));
     debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -74,27 +90,19 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn index_rewrite<B>(mut req: Request<B>, next: Next<B>) -> Result<impl IntoResponse> {
-    debug!("hi hi index rew {}", req.uri());
-    if req.uri().path() == "/" {
-        let mut parts = req.uri().clone().into_parts();
-        parts.path_and_query = Some(PathAndQuery::from_static("/index"));
-        *req.uri_mut() = Uri::from_parts(parts).map_err(|e| anyhow!("Uri::from_parts"))?;
-        debug!("in {}", req.uri());
-    }
+static DATA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/data");
 
-    Ok(next.run(req).await)
+lazy_static! {
+    static ref INDEX_ORG_URL: Uri = Uri::from_str("/index.org").expect("the crap to parse");
 }
 
-async fn org_file(
-    Path(key): Path<String>,
-    // Extension(state): Extension<SharedState>,
-) -> Result<impl IntoResponse> {
-    dbg!(&key);
-    Ok("hah a you want a page thats very funny")
-}
+async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
+    let uri = if req.uri() == "/" {
+        &INDEX_ORG_URL
+    } else {
+        req.uri()
+    };
 
 
-async fn fallback_handler<B>(req: Request<B>) -> impl IntoResponse {
-    (StatusCode::NOT_FOUND, "hi.. 404! nothing here.")
+    Ok(())
 }
