@@ -1,0 +1,12 @@
+[package]
+name = "site_common"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+orgish = { path = "../orgish" }
+typed-html = { git = "https://github.com/bodil/typed-html",  rev = "e18d328951b6b9216976d180f3dea2e6600a3982"}
+anyhow = "1.0.52"
+include_dir = "0.7.2"

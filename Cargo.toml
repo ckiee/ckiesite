@@ -1,5 +1,7 @@
 [workspace]
 members = [
     "orgish",
-    "site"
+    "site",
+    "org_doc",
+    "site_common"
 ]

@@ -1,0 +1,15 @@
+[package]
+name = "org_doc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+site_common = { path = "../site_common" }
+anyhow = "1.0.52"
+include_dir = "0.7.2"
+quote = "1.0.18"

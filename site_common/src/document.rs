@@ -1,13 +1,11 @@
-use std::path::Path;
-
 use anyhow::{anyhow, Result};
 use orgish::{
     parse::{parse_n_pass, AstNode, Directive},
     treewalk::ast_to_html_string,
 };
-use tokio::{fs::File, io::AsyncReadExt};
 use typed_html::{dom::DOMTree, html, text, unsafe_text};
 
+#[derive(Debug)]
 pub struct Document {
     ast: Vec<AstNode>,
     id: String,
@@ -15,11 +13,8 @@ pub struct Document {
 }
 
 impl Document {
-    pub async fn from_org_file(path: impl AsRef<Path>) -> Result<Self> {
-        let mut file = File::open(path.as_ref()).await?;
-        let mut buf = String::new();
-        file.read_to_string(&mut buf).await?;
-        let ast = parse_n_pass(&buf)?;
+    pub fn from_org_id_file(file: &include_dir::File<'static>) -> Result<Self> {
+        let ast = parse_n_pass(file.contents_utf8().ok_or(anyhow!("expected utf8"))?)?;
         let title = ast
             .iter()
             .filter(|n| matches!(n, AstNode::Directive(Directive::Title(_))))
@@ -31,8 +26,8 @@ impl Document {
 
         Ok(Document {
             ast,
-            id: path
-                .as_ref()
+            id: file
+                .path()
                 .file_stem()
                 .expect("the file we opened to have a name")
                 .to_owned()

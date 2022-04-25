@@ -1,14 +1,15 @@
 use anyhow::Result;
 
-use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType};
+use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive};
 
 use super::data::AstNode;
 #[test]
 fn parses_directive() -> Result<()> {
     assert_eq!(
         parse_n_pass("#+TITLE: hello\n")?,
-        vec![AstNode::Directive("TITLE".to_string(), "hello".to_string())]
+        vec![AstNode::Directive(Directive::Title("hello".to_string()))]
     );
+    // TODO add more directiev types
     Ok(())
 }
 

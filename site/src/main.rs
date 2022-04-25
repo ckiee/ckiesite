@@ -2,27 +2,16 @@ use anyhow::anyhow;
 use include_dir::{Dir,include_dir};
 use lazy_static::lazy_static;
 use axum::{
-    extract::Path,
     handler::Handler,
-    http::{uri::PathAndQuery, StatusCode},
-    middleware::{self, Next},
-    response::{Html, IntoResponse, Response},
-    routing::{get, get_service},
+    response::{IntoResponse, Response},
     Router,
 };
 use clap::Parser;
-use document::Document;
-use hyper::{Request, Uri};
-use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string};
-use std::{net::SocketAddr, str::FromStr};
-use template::make_article_html;
+use hyper::{Request, Uri, StatusCode};
+use site_common::document::Document;
+use std::{net::SocketAddr, str::FromStr, collections::HashMap};
 use thiserror::Error;
-use tower::Layer;
-use tower_http::services::ServeDir;
 use tracing::{debug, error};
-
-pub mod document;
-mod template;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -90,19 +79,33 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-static DATA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/data");
+static STATIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../data/static");
+
+org_doc::org_docs!();
 
 lazy_static! {
-    static ref INDEX_ORG_URL: Uri = Uri::from_str("/index.org").expect("the crap to parse");
+    static ref INDEX_ORG_URI: Uri = Uri::from_str("/index.org").unwrap();
 }
 
 async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
     let uri = if req.uri() == "/" {
-        &INDEX_ORG_URL
+        &INDEX_ORG_URI
     } else {
         req.uri()
     };
 
-
-    Ok(())
+    if uri.path().starts_with("/static") {
+        Ok(match STATIC_DIR.get_file(&uri.path()["/static/".len()..]) {
+            None => (StatusCode::NOT_FOUND, "):".to_string()),
+            Some(f) => (StatusCode::OK, f.contents_utf8().ok_or(anyhow!("file to be utf-8"))?.to_owned())
+        })
+    } else {
+        unreachable!();
+        // Ok(match ORG_DOCUMENTS.get(uri.path()) {
+        //     None => (StatusCode::NOT_FOUND, "):".to_string()),
+        //     Some(f) => {
+        //         (StatusCode::OK, f.render_page_html()?)
+        //     }
+        // })
+    }
 }

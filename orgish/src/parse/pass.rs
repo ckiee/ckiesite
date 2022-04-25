@@ -1,6 +1,6 @@
 use std::{iter::Peekable, slice::Iter};
 
-use tracing::debug;
+
 
 use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive};
 
@@ -79,7 +79,7 @@ impl BetPassState {
 
 fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState) -> BlockExprTree {
     let mut out: BlockExprTree = vec![];
-    while let Some(node) = nodes.next() {
+    for node in nodes {
         // debug!("bet_pass: {:?}", &node);
         match node {
             BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(

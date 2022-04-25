@@ -96,13 +96,13 @@ where
 {
     opaque!(no_partial(
         choice!(
-            link(),
-            inline_code(),
-            attempt(nbsp()),
-            bold(),
-            italic(),
-            underline(),
-            strikethrough(),
+            // link(),
+            // inline_code(),
+            // attempt(nbsp()),
+            // bold(),
+            // italic(),
+            // underline(),
+            // strikethrough(),
             char()
         )
         .message("while parsing block_expr_node")
@@ -135,7 +135,8 @@ where
     marker_chars(token(ch), Box::new(move || token(ch)))
 }
 
-// Avoid trying to use Copy or Clone https://github.com/Marwes/combine/issues/283#issuecomment-658779127
+// Avoid trying to use Copy or Clone on parsers.
+// https://github.com/Marwes/combine/issues/283#issuecomment-658779127
 fn marker_chars<Input, P: Parser<Input>>(start: P, end: Box<dyn Fn() -> P>) -> impl Parser<Input, Output = BlockExprTree>
 where
     Input: Stream<Token = char>,
@@ -151,6 +152,7 @@ where
                 .easy_parse(position::Stream::new(&s[..]))
                 // this is the except on Result
                 // TODO it PANICs. Make it not.
+                .map_err(|e| format!("{}", e))
                 .expect("In marker_char subparser")
                 .0)
         }),
@@ -247,7 +249,7 @@ where
         )),
     )
         .map(|(_, _, link, maybe_bet)| {
-            BlockExprNode::Link(link, maybe_bet.map(|s| s.1).unwrap_or(vec![])) // TODO implement this case properly (rec-parse like marker_char)
+            BlockExprNode::Link(link, maybe_bet.map(|s| s.1).unwrap_or_default()) // TODO implement this case properly (rec-parse like marker_char)
         })
         .message("while parsing link")
 }
