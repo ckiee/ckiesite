@@ -1,7 +1,5 @@
 use std::{iter::Peekable, slice::Iter};
 
-
-
 use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive};
 
 pub enum StopAt {
@@ -42,21 +40,19 @@ pub fn flat_nodes_to_tree(
                 bet_pass(&mut bet.iter().peekable(), &mut Default::default()),
             )),
 
-            AstNode::Directive(dir) => {
-                match dir {
-                    Directive::Raw(k, v) => {
-                        match match k.to_lowercase().as_str() {
-                            "id" => Some(Directive::Id(v.to_string())),
-                            "title" => Some(Directive::Title(v.to_string())),
-                            _ => None
-                        } {
-                            None => {},
-                            Some(dir) => out.push(AstNode::Directive(dir))
-                        };
-                    },
-                    _ => unreachable!()
+            AstNode::Directive(dir) => match dir {
+                Directive::Raw(k, v) => {
+                    match match k.to_lowercase().as_str() {
+                        "id" => Some(Directive::Id(v.to_string())),
+                        "title" => Some(Directive::Title(v.to_string())),
+                        _ => None,
+                    } {
+                        None => {}
+                        Some(dir) => out.push(AstNode::Directive(dir)),
+                    };
                 }
-            }
+                _ => unreachable!(),
+            },
 
             other => out.push(other.clone()),
         }
@@ -101,7 +97,6 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
             //         debug!("BET in BEN::Link {:#?}", bet);
             //         out.push(BlockExprNode::Link(link.to_string(), bet_pass(&mut bet.iter().peekable(), state.inside_nbsp())))
             //     },
-
             BlockExprNode::Bold(bet) => out.push(BlockExprNode::Bold(bet_pass(
                 &mut bet.iter().peekable(),
                 state,
@@ -122,8 +117,8 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
                 url.to_string(),
                 match maybe_bet {
                     Some(bet) => Some(bet_pass(&mut bet.iter().peekable(), state)),
-                    None => None
-                }
+                    None => None,
+                },
             )),
             other => out.push(other.clone()),
         }

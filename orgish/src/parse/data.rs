@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum AstNode {
@@ -43,7 +43,7 @@ pub enum Directive {
     Id(String),
     Title(String),
     /// Pre-pass datatype
-    Raw(String, String)
+    Raw(String, String),
 }
 
 impl BlockExprNode {
