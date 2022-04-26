@@ -542,6 +542,39 @@ fn parses_link() -> Result<()> {
             )]
         )]
     );
-    // TODO add more directiev types
+
+    // rust is not in the mood for proper formatting so this is handmade )^:
+    assert_eq!(
+        parse_n_pass("in [[https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix][a lot of places]].\n")?,
+        vec![AstNode::Block(BlockType::Block,
+            vec![
+                BlockExprNode::Char('i'),
+                BlockExprNode::Char('n'),
+                BlockExprNode::Char(' '),
+                BlockExprNode::Link(
+                    "https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix".to_string(),
+                    Some(vec![
+                        BlockExprNode::Char('a'),
+                        BlockExprNode::Char(' '),
+                        BlockExprNode::Char('l'),
+                        BlockExprNode::Char('o'),
+                        BlockExprNode::Char('t'),
+                        BlockExprNode::Char(' '),
+                        BlockExprNode::Char('o'),
+                        BlockExprNode::Char('f'),
+                        BlockExprNode::Char(' '),
+                        BlockExprNode::Char('p'),
+                        BlockExprNode::Char('l'),
+                        BlockExprNode::Char('a'),
+                        BlockExprNode::Char('c'),
+                        BlockExprNode::Char('e'),
+                        BlockExprNode::Char('s')]
+                    )
+                ),
+                BlockExprNode::Char('.')
+            ]
+        )]
+    );
+
     Ok(())
 }
