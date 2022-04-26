@@ -3,6 +3,7 @@ use anyhow::Result;
 use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive};
 
 use super::data::AstNode;
+
 #[test]
 fn parses_directive() -> Result<()> {
     assert_eq!(
@@ -510,5 +511,37 @@ fn parses_nbsp() -> Result<()> {
             vec![BlockExprNode::Char('h'), sp_char, BlockExprNode::Char('h')]
         )]
     );
+    Ok(())
+}
+
+#[test]
+fn parses_link() -> Result<()> {
+    assert_eq!(
+        parse_n_pass("[[https://example.com/some-path][helo]]\n")?,
+        vec![AstNode::Block(
+            BlockType::Block,
+            vec![BlockExprNode::Link(
+                "https://example.com/some-path".to_string(),
+                Some(vec![
+                    BlockExprNode::Char('h'),
+                    BlockExprNode::Char('e'),
+                    BlockExprNode::Char('l'),
+                    BlockExprNode::Char('o')
+                ])
+            )]
+        )]
+    );
+
+    assert_eq!(
+        parse_n_pass("[[https://example.com/some-path]]\n")?,
+        vec![AstNode::Block(
+            BlockType::Block,
+            vec![BlockExprNode::Link(
+                "https://example.com/some-path".to_string(),
+                None
+            )]
+        )]
+    );
+    // TODO add more directiev types
     Ok(())
 }

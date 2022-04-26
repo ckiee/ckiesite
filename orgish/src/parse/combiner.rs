@@ -96,13 +96,13 @@ where
 {
     opaque!(no_partial(
         choice!(
-            // link(),
-            // inline_code(),
-            // attempt(nbsp()),
-            // bold(),
-            // italic(),
-            // underline(),
-            // strikethrough(),
+            link(),
+            inline_code(),
+            attempt(nbsp()),
+            bold(),
+            italic(),
+            underline(),
+            strikethrough(),
             char()
         )
         .message("while parsing block_expr_node")
@@ -242,14 +242,14 @@ where
         token('['),                             // [[https://ckie.dev][some /text/ with BENs]]
         token('['),                             // [https://ckie.dev]
         take_until::<String, _, _>(token(']')), // https://ckie.dev
-        optional((
-            token(']'),
+        token(']'),
+        optional(
             marker_chars(token('['), Box::new(|| token(']'))),             // [<BET>]
-            token(']'),
-        )),
+        ),
+        token(']'),
     )
-        .map(|(_, _, link, maybe_bet)| {
-            BlockExprNode::Link(link, maybe_bet.map(|s| s.1).unwrap_or_default()) // TODO implement this case properly (rec-parse like marker_char)
+        .map(|(_, _, link, _, maybe_bet, _)| {
+            BlockExprNode::Link(link, maybe_bet) // TODO implement this case properly (rec-parse like marker_char)
         })
         .message("while parsing link")
 }

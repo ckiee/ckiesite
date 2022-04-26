@@ -27,7 +27,7 @@ pub enum BlockExprNode {
     Strikethrough(BlockExprTree),
     NonbreakingSpace(BlockExprTree),
     Code(String),
-    Link(String, BlockExprTree),
+    Link(String, Option<BlockExprTree>),
     /// One or more newlines
     Linespace,
 }

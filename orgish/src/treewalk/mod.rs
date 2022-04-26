@@ -80,10 +80,13 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
         )),
         BlockExprNode::Strikethrough(bet) => Ok(format!("<del>{}</del>", bet_to_html_string(bet)?)),
         BlockExprNode::Code(verbatim) => Ok(format!(r#"<span class="code">{}</span>"#, verbatim)),
-        BlockExprNode::Link(url, bet) => Ok(format!(
+        BlockExprNode::Link(url, maybe_bet) => Ok(format!(
             r#"<a href="{}">{}</a>"#,
             url,
-            bet_to_html_string(bet)?
+            match maybe_bet {
+                Some(bet) => bet_to_html_string(bet)?,
+                None => panic!("unimplemented")
+            }
         )),
     }
 }
