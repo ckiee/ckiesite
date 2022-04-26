@@ -10,3 +10,4 @@ anyhow = "1.0.52"
 combine = "4.6.3"
 syntect = "4.6.0"
 tracing = "0.1.32"
+serde = { version = "1.0", features = ["derive"] }

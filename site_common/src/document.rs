@@ -3,9 +3,10 @@ use orgish::{
     parse::{parse_n_pass, AstNode, Directive},
     treewalk::ast_to_html_string,
 };
+use serde::{Serialize, Deserialize};
 use typed_html::{dom::DOMTree, html, text, unsafe_text};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Document {
     ast: Vec<AstNode>,
     id: String,

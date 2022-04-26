@@ -992,9 +992,12 @@ name = "org_doc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bincode",
  "include_dir",
+ "proc-macro2",
  "quote",
  "site_common",
+ "syn",
 ]
 
 [[package]]
@@ -1003,6 +1006,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "combine",
+ "serde",
  "syntect",
  "tracing",
 ]
@@ -1166,9 +1170,9 @@ checksum = "bc881b2c22681370c6a780e47af9840ef841837bc98118431d4e1868bd0c1086"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.36"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7342d5883fbccae1cc37a2353b09c87c9b0f3afd73f5fb9bba687a1f733b029"
+checksum = "ec757218438d5fda206afc041538b2f6d889286160d649a86a24d37e1235afd1"
 dependencies = [
  "unicode-xid",
 ]
@@ -1318,6 +1322,9 @@ name = "serde"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"
@@ -1383,6 +1390,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "bincode",
  "cap-std",
  "clap",
  "html-minifier",
@@ -1406,6 +1414,7 @@ dependencies = [
  "anyhow",
  "include_dir",
  "orgish",
+ "serde",
  "typed-html",
 ]
 
@@ -1471,9 +1480,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.89"
+version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea297be220d52398dcc07ce15a209fce436d361735ac1db700cab3b6cdfb9f54"
+checksum = "b683b2b825c8eef438b77c36a06dc262294da3d5a5813fac20da149241dcd44d"
 dependencies = [
  "proc-macro2",
  "quote",

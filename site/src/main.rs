@@ -1,15 +1,15 @@
 use anyhow::anyhow;
-use include_dir::{Dir,include_dir};
-use lazy_static::lazy_static;
 use axum::{
     handler::Handler,
-    response::{IntoResponse, Response},
+    response::{Html, IntoResponse, Response},
     Router,
 };
 use clap::Parser;
-use hyper::{Request, Uri, StatusCode};
+use hyper::{Request, StatusCode, Uri};
+use include_dir::{include_dir, Dir};
+use lazy_static::lazy_static;
 use site_common::document::Document;
-use std::{net::SocketAddr, str::FromStr, collections::HashMap};
+use std::{collections::HashMap, net::SocketAddr, str::FromStr};
 use thiserror::Error;
 use tracing::{debug, error};
 
@@ -60,8 +60,7 @@ async fn main() -> Result<()> {
         )
     };
 
-    let app = Router::new()
-        .fallback(fallback_handler.into_service());
+    let app = Router::new().fallback(fallback_handler.into_service());
 
     let addr = SocketAddr::from((
         if args.everywhere {
@@ -81,10 +80,9 @@ async fn main() -> Result<()> {
 
 static STATIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../data/static");
 
-org_doc::org_docs!();
-
 lazy_static! {
     static ref INDEX_ORG_URI: Uri = Uri::from_str("/index.org").unwrap();
+    static ref ORG_DOCS: HashMap<String, Document> = org_doc::org_docs!();
 }
 
 async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
@@ -96,16 +94,21 @@ async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
 
     if uri.path().starts_with("/static") {
         Ok(match STATIC_DIR.get_file(&uri.path()["/static/".len()..]) {
-            None => (StatusCode::NOT_FOUND, "):".to_string()),
-            Some(f) => (StatusCode::OK, f.contents_utf8().ok_or(anyhow!("file to be utf-8"))?.to_owned())
+            None => (StatusCode::NOT_FOUND, "):".to_string()).into_response(),
+            Some(f) => (
+                StatusCode::OK,
+                f.contents_utf8()
+                    .ok_or(anyhow!("file to be utf-8"))?
+                    .to_owned(),
+            )
+                .into_response(),
         })
     } else {
-        unreachable!();
-        // Ok(match ORG_DOCUMENTS.get(uri.path()) {
-        //     None => (StatusCode::NOT_FOUND, "):".to_string()),
-        //     Some(f) => {
-        //         (StatusCode::OK, f.render_page_html()?)
-        //     }
-        // })
+        // we trim off the first byte since it's probably `/` and that doesn't match the hashmap keys
+        // sure do hope it's not some unicode scalar that will do really weird things and make us panic
+        Ok(match ORG_DOCS.get(&uri.path()[1..]) {
+            None => (StatusCode::NOT_FOUND, "):".to_string()).into_response(),
+            Some(f) => Html(f.render_page_html()?).into_response(),
+        })
     }
 }

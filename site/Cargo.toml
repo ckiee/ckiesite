@@ -22,3 +22,4 @@ lazy_static = "1.4.0"
 include_dir = "0.7.2"
 org_doc = { path = "../org_doc" }
 site_common = { path = "../site_common" }
+bincode = "1.3.3"

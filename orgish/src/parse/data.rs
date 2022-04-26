@@ -1,4 +1,6 @@
-#[derive(PartialEq, Debug, Clone)]
+use serde::{Serialize, Deserialize};
+
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum AstNode {
     SourceBlock {
         language: String,
@@ -16,7 +18,7 @@ pub enum AstNode {
     HorizRule,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum BlockExprNode {
     Char(char),
     Bold(BlockExprTree),
@@ -30,13 +32,13 @@ pub enum BlockExprNode {
     Linespace,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum BlockType {
     Block,
     Inline,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum Directive {
     Id(String),
     Title(String),
