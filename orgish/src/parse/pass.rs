@@ -115,10 +115,7 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
             ))),
             BlockExprNode::Link(url, maybe_bet) => out.push(BlockExprNode::Link(
                 url.to_string(),
-                match maybe_bet {
-                    Some(bet) => Some(bet_pass(&mut bet.iter().peekable(), state)),
-                    None => None,
-                },
+                maybe_bet.as_ref().map(|bet| bet_pass(&mut bet.iter().peekable(), state)),
             )),
             other => out.push(other.clone()),
         }

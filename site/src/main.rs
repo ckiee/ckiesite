@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     tracing_subscriber::fmt::init(); // loggy log, set RUST_LOG=debug
 
-    let error_handler = |e: std::io::Error| async move {
+    let _error_handler = |e: std::io::Error| async move {
         error!("io error while serving static data: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,

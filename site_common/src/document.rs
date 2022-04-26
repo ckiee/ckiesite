@@ -17,9 +17,7 @@ impl Document {
     pub fn from_org_id_file(file: &include_dir::File<'static>) -> Result<Self> {
         let ast = parse_n_pass(file.contents_utf8().ok_or(anyhow!("expected utf8"))?)?;
         let title = ast
-            .iter()
-            .filter(|n| matches!(n, AstNode::Directive(Directive::Title(_))))
-            .next()
+            .iter().find(|n| matches!(n, AstNode::Directive(Directive::Title(_))))
             .map(|n| match n {
                 AstNode::Directive(Directive::Title(t)) => t.clone(),
                 _ => unreachable!(),

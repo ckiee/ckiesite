@@ -169,10 +169,8 @@ where
                 // this is the except on Result
                 // TODO it PANICs. Make it not.
                 .map_err(|e| format!("{}", e))
-                .expect(&format!(
-                    "In marker_char subparser @ {}",
-                    pos
-                ))
+                .unwrap_or_else(|_| panic!("In marker_char subparser @ {}",
+                    pos))
                 .0)
         }),
         end_2,
