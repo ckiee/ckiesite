@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use combine::{
     attempt, between, choice, many1, opaque, optional,
     parser::char::{alpha_num, newline},
@@ -7,9 +9,9 @@ use combine::{
         repeat::{many, take_until},
         token::token,
     },
-    satisfy, skip_many,
+    position, satisfy, skip_many,
     stream::position,
-    EasyParser, ParseError, Parser, Stream,
+    EasyParser, ParseError, Parser, Stream, StreamOnce,
 };
 
 use super::{
@@ -21,6 +23,7 @@ fn whitespace<Input>() -> impl Parser<Input, Output = char>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     satisfy(|c: char| c.is_whitespace() && c != '\n')
 }
@@ -29,6 +32,7 @@ fn whitespaces<Input>() -> impl Parser<Input, Output = String>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     many(whitespace())
 }
@@ -37,6 +41,7 @@ fn linespace<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     let comment = (string("# "), skip_many(satisfy(|c| c != '\n')))
         .map(|_| ())
@@ -52,6 +57,7 @@ fn directive<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     (
         between(string("#+"), token(':'), many(satisfy(|c| c != ':'))),
@@ -66,6 +72,7 @@ fn source_block<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     (
         string("#+BEGIN_SRC"), // #+BEGIN_SRC
@@ -83,6 +90,7 @@ fn horiz_rule<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     string("-----")
         .map(|_| AstNode::HorizRule)
@@ -93,6 +101,7 @@ fn block_expr_node<Input>() -> FnOpaque<Input, BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     opaque!(no_partial(
         choice!(
@@ -113,6 +122,7 @@ fn ast_block_expr_node<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     many1(block_expr_node()).map(|v| AstNode::Block(BlockType::Block, v))
 }
@@ -121,6 +131,7 @@ fn char<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     satisfy(|c: char| !c.is_control())
         .map(BlockExprNode::Char)
@@ -131,29 +142,37 @@ fn marker_char<Input>(ch: char) -> impl Parser<Input, Output = BlockExprTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     marker_chars(token(ch), Box::new(move || token(ch)))
 }
 
 // Avoid trying to use Copy or Clone on parsers.
 // https://github.com/Marwes/combine/issues/283#issuecomment-658779127
-fn marker_chars<Input, P: Parser<Input>>(start: P, end: Box<dyn Fn() -> P>) -> impl Parser<Input, Output = BlockExprTree>
+fn marker_chars<Input, P: Parser<Input>>(
+    start: P,
+    end: Box<dyn Fn() -> P>,
+) -> impl Parser<Input, Output = BlockExprTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     let end_1 = end();
     let end_2 = end();
     (
         start,
-        take_until::<String, _, _>(end_1).flat_map(|s| {
+        (position(), take_until::<String, _, _>(end_1)).flat_map(|(pos, s)| {
             // HACK ouch ouch ouch
             Ok(many1(block_expr_node())
                 .easy_parse(position::Stream::new(&s[..]))
                 // this is the except on Result
                 // TODO it PANICs. Make it not.
                 .map_err(|e| format!("{}", e))
-                .expect("In marker_char subparser")
+                .expect(&format!(
+                    "In marker_char subparser @ {}",
+                    pos
+                ))
                 .0)
         }),
         end_2,
@@ -166,6 +185,7 @@ fn inline_code<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     macro_rules! stupid_marker {
         () => {
@@ -185,6 +205,7 @@ fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     marker_char('*')
         .map(BlockExprNode::Bold)
@@ -195,6 +216,7 @@ fn italic<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     marker_char('/')
         .map(BlockExprNode::Italic)
@@ -205,6 +227,7 @@ fn underline<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     marker_char('_')
         .map(BlockExprNode::Underline)
@@ -215,28 +238,29 @@ fn strikethrough<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     marker_char('+')
         .map(BlockExprNode::Strikethrough)
         .message("while parsing strikethrough")
 }
 
-
 fn nbsp<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     marker_chars(string("nbsp&"), Box::new(|| string("&nbsp")))
         .map(BlockExprNode::NonbreakingSpace)
         .message("while parsing nbsp")
 }
 
-
 fn link<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     (
         token('['),                             // [[https://ckie.dev][some /text/ with BENs]]
@@ -244,7 +268,7 @@ where
         take_until::<String, _, _>(token(']')), // https://ckie.dev
         token(']'),
         optional(
-            marker_chars(token('['), Box::new(|| token(']'))),             // [<BET>]
+            marker_chars(token('['), Box::new(|| token(']'))), // [<BET>]
         ),
         token(']'),
     )
@@ -258,6 +282,7 @@ fn heading<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     (
         whitespaces(),
@@ -279,6 +304,7 @@ pub fn ast_node<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     choice!(
         attempt(heading()),
@@ -296,6 +322,7 @@ pub fn org_file<Input>() -> impl Parser<Input, Output = AbstractSyntaxTree>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display
 {
     // We have a document like this:
     // |ast_node
