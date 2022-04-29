@@ -28,6 +28,9 @@ pub enum BlockExprNode {
     NonbreakingSpace(BlockExprTree),
     Code(String),
     Link(String, Option<BlockExprTree>),
+    Routing {
+        path: String,
+    },
     /// One or more newlines
     Linespace,
 }

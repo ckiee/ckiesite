@@ -578,3 +578,18 @@ fn parses_link() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn parses_routing() -> Result<()> {
+    assert_eq!(
+        parse_n_pass("* :/helo:\n")?,
+        vec![AstNode::Heading {
+            level: 1,
+            children: vec![],
+            title: vec![BlockExprNode::Routing {
+                path: "/helo".to_string()
+            }]
+        }]
+    );
+    Ok(())
+}

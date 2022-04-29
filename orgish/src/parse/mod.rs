@@ -17,7 +17,7 @@ pub fn parse_n_pass(input: &str) -> Result<Vec<AstNode>> {
         Ok((ast, _)) => Ok(pass::flat_nodes_to_tree(
             &mut ast.iter().peekable(),
             pass::StopAt::Eof,
-        )),
+        )?),
         Err(pain) => Err(anyhow!(pain.to_string())),
     }
 }

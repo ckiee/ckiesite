@@ -1,6 +1,6 @@
 # This file contains the whole blog. Just one file. Easier to serve properly.
 * hi
-# :/:
+:/:
 # this has to be commented because parser thinks its italics, TODO
 this is my /new new new new/ website. it is different from the other ones since it's no longer just some dumb static files.
 ** :nav:

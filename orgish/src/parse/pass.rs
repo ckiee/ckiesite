@@ -1,5 +1,7 @@
 use std::{iter::Peekable, slice::Iter};
 
+use anyhow::{bail, Result};
+
 use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive};
 
 pub enum StopAt {
@@ -10,7 +12,7 @@ pub enum StopAt {
 pub fn flat_nodes_to_tree(
     nodes: &mut Peekable<Iter<AstNode>>,
     stop_at: StopAt,
-) -> AbstractSyntaxTree {
+) -> Result<AbstractSyntaxTree> {
     let mut out: AbstractSyntaxTree = vec![];
     while let Some(node) = {
         match stop_at {
@@ -28,8 +30,11 @@ pub fn flat_nodes_to_tree(
                 title,
             } => out.push(AstNode::Heading {
                 level: *level,
-                title: bet_pass(&mut title.iter().peekable(), &mut Default::default()),
-                children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level)),
+                title: bet_pass(
+                    &mut title.iter().peekable(),
+                    &mut BetPassState::new_with_ast_node(node.clone()),
+                )?,
+                children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level))?,
             }),
 
             // Optimization: Linespace is not very useful in the final AST
@@ -37,7 +42,10 @@ pub fn flat_nodes_to_tree(
 
             AstNode::Block(ty, bet) => out.push(AstNode::Block(
                 ty.clone(),
-                bet_pass(&mut bet.iter().peekable(), &mut Default::default()),
+                bet_pass(
+                    &mut bet.iter().peekable(),
+                    &mut BetPassState::new_with_ast_node(node.clone()),
+                )?,
             )),
 
             AstNode::Directive(dir) => match dir {
@@ -58,22 +66,31 @@ pub fn flat_nodes_to_tree(
         }
     }
 
-    out
+    Ok(out)
 }
 
-#[derive(Default)]
 struct BetPassState {
     inside_nbsp: bool,
+    top_level_ast_node: AstNode,
 }
 
 impl BetPassState {
+    fn new_with_ast_node(top_level_ast_node: AstNode) -> Self {
+        Self {
+            inside_nbsp: false,
+            top_level_ast_node,
+        }
+    }
     fn inside_nbsp(&mut self) -> &mut Self {
         self.inside_nbsp = true;
         self
     }
 }
 
-fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState) -> BlockExprTree {
+fn bet_pass(
+    nodes: &mut Peekable<Iter<BlockExprNode>>,
+    state: &mut BetPassState,
+) -> Result<BlockExprTree> {
     let mut out: BlockExprTree = vec![];
     for node in nodes {
         // debug!("bet_pass: {:?}", &node);
@@ -81,7 +98,7 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
             BlockExprNode::NonbreakingSpace(bet) => out.append(&mut bet_pass(
                 &mut bet.iter().peekable(),
                 state.inside_nbsp(),
-            )),
+            )?),
             BlockExprNode::Char(' ') if state.inside_nbsp => {
                 out.push(BlockExprNode::Char('\u{a0}'))
             }
@@ -100,26 +117,36 @@ fn bet_pass(nodes: &mut Peekable<Iter<BlockExprNode>>, state: &mut BetPassState)
             BlockExprNode::Bold(bet) => out.push(BlockExprNode::Bold(bet_pass(
                 &mut bet.iter().peekable(),
                 state,
-            ))),
+            )?)),
             BlockExprNode::Italic(bet) => out.push(BlockExprNode::Italic(bet_pass(
                 &mut bet.iter().peekable(),
                 state,
-            ))),
+            )?)),
             BlockExprNode::Underline(bet) => out.push(BlockExprNode::Underline(bet_pass(
                 &mut bet.iter().peekable(),
                 state,
-            ))),
+            )?)),
             BlockExprNode::Strikethrough(bet) => out.push(BlockExprNode::Strikethrough(bet_pass(
                 &mut bet.iter().peekable(),
                 state,
-            ))),
+            )?)),
             BlockExprNode::Link(url, maybe_bet) => out.push(BlockExprNode::Link(
                 url.to_string(),
-                maybe_bet.as_ref().map(|bet| bet_pass(&mut bet.iter().peekable(), state)),
+                match maybe_bet.as_ref() {
+                    Some(bet) => Some(bet_pass(&mut bet.iter().peekable(), state)?),
+                    None => None,
+                },
             )),
+            BlockExprNode::Routing { .. }
+                // Heading's children are AST, while it's title is our BET, so this
+                // is safe to check this way, even if it's a bit ~awkwardd~
+                if !matches!(state.top_level_ast_node, AstNode::Heading { .. }) =>
+            {
+                bail!("BEN::Routing cannot be outside Heading title");
+            }
             other => out.push(other.clone()),
         }
     }
 
-    out
+    Ok(out)
 }

@@ -90,5 +90,6 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
                 None => panic!("unimplemented"),
             }
         )),
+        BlockExprNode::Routing { .. } => Ok("".to_string()) // routing is not used for html treewalk
     }
 }
