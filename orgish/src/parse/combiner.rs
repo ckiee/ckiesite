@@ -16,7 +16,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockExprTree, BlockType, Directive,
+    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, HeaderRouting,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -107,7 +107,6 @@ where
         choice!(
             link(),
             inline_code(),
-            routing(),
             attempt(nbsp()),
             bold(),
             italic(),
@@ -199,15 +198,15 @@ where
         .message("while parsing inline_code")
 }
 
-fn routing<Input>() -> impl Parser<Input, Output = BlockExprNode>
+fn header_routing<Input>() -> impl Parser<Input, Output = HeaderRouting>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
     (token(':'), take_until(token(':')), token(':'))
-        .map(|(_, path, _)| BlockExprNode::Routing { path })
-        .message("while parsing routing")
+        .map(|(_, path, _)| HeaderRouting::new(path))
+        .message("while parsing header routing")
 }
 
 fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
@@ -296,15 +295,17 @@ where
     (
         whitespaces(),
         many1::<Vec<_>, _, _>(token('*')).map(|x: Vec<_>| x.len()),
+        optional(header_routing()),
         many1::<String, _, _>(whitespace()),
         many1(block_expr_node()),
     )
-        .map(|(_, level, _, title)| AstNode::Heading {
+        .map(|(_, level, routing, _, title)| AstNode::Heading {
             level: level
                 .try_into()
                 .expect("the header level to be smaller than the maximum value of usize"),
             title,
             children: vec![], // we fill this in later
+            routing,
         })
         .message("while parsing heading")
 }

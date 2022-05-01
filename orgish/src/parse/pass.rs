@@ -28,6 +28,7 @@ pub fn flat_nodes_to_tree(
                 children: _,
                 level,
                 title,
+                routing
             } => out.push(AstNode::Heading {
                 level: *level,
                 title: bet_pass(
@@ -35,6 +36,7 @@ pub fn flat_nodes_to_tree(
                     &mut BetPassState::new_with_ast_node(node.clone()),
                 )?,
                 children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level))?,
+                routing: routing.clone()
             }),
 
             // Optimization: Linespace is not very useful in the final AST
@@ -137,13 +139,6 @@ fn bet_pass(
                     None => None,
                 },
             )),
-            BlockExprNode::Routing { .. }
-                // Heading's children are AST, while it's title is our BET, so this
-                // is safe to check this way, even if it's a bit ~awkwardd~
-                if !matches!(state.top_level_ast_node, AstNode::Heading { .. }) =>
-            {
-                bail!("BEN::Routing cannot be outside Heading title");
-            }
             other => out.push(other.clone()),
         }
     }

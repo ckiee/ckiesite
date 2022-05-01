@@ -28,6 +28,7 @@ fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
             children,
             level,
             title,
+            routing, // TODO use this to link?
         } => format!(
             // In HTML headings do not have children as in our AST.
             "<h{level}>{title}</h{level}>{children}",
@@ -90,6 +91,5 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
                 None => panic!("unimplemented"),
             }
         )),
-        BlockExprNode::Routing { .. } => Ok("".to_string()) // routing is not used for html treewalk
     }
 }

@@ -12,6 +12,7 @@ pub enum AstNode {
         level: u16,
         title: BlockExprTree,
         children: AbstractSyntaxTree,
+        routing: Option<HeaderRouting>,
     },
     Block(BlockType, BlockExprTree),
     /// Equivalent to html <hr>
@@ -28,9 +29,6 @@ pub enum BlockExprNode {
     NonbreakingSpace(BlockExprTree),
     Code(String),
     Link(String, Option<BlockExprTree>),
-    Routing {
-        path: String,
-    },
     /// One or more newlines
     Linespace,
 }
@@ -47,6 +45,15 @@ pub enum Directive {
     Title(String),
     /// Pre-pass datatype
     Raw(String, String),
+}
+
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub struct HeaderRouting {
+    path: String, // TODO: add options
+}
+
+impl HeaderRouting {
+    pub fn new(path: String) -> Self { Self { path } }
 }
 
 impl BlockExprNode {
