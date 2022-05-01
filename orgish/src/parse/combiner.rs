@@ -295,11 +295,12 @@ where
     (
         whitespaces(),
         many1::<Vec<_>, _, _>(token('*')).map(|x: Vec<_>| x.len()),
+        whitespaces(),
         optional(header_routing()),
-        many1::<String, _, _>(whitespace()),
+        whitespaces(),
         many1(block_expr_node()),
     )
-        .map(|(_, level, routing, _, title)| AstNode::Heading {
+        .map(|(_, level, _, routing, _, title)| AstNode::Heading {
             level: level
                 .try_into()
                 .expect("the header level to be smaller than the maximum value of usize"),

@@ -2,6 +2,4 @@
 members = [
     "orgish",
     "site",
-    "org_doc",
-    "site_common"
 ]

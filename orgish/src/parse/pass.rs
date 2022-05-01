@@ -1,6 +1,6 @@
 use std::{iter::Peekable, slice::Iter};
 
-use anyhow::{bail, Result};
+use anyhow::{Result};
 
 use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive};
 

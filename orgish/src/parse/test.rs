@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive};
+use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive, HeaderRouting};
 
 use super::data::AstNode;
 
@@ -84,6 +84,7 @@ fn parses_heading() -> Result<()> {
         assert_eq!(
             parse_n_pass(test.0)?,
             vec![AstNode::Heading {
+                routing: None,
                 level: test.1,
                 children: vec![AstNode::Block(
                     BlockType::Block,
@@ -111,15 +112,18 @@ fn parse_escapes_heading_level() -> Result<()> {
         parse_n_pass("* a\n** b\n** c\n* d\n")?,
         vec![
             AstNode::Heading {
+                routing: None,
                 level: 1,
                 title: vec![BlockExprNode::Char('a')],
                 children: vec![
                     AstNode::Heading {
+                        routing: None,
                         level: 2,
                         title: vec![BlockExprNode::Char('b')],
                         children: vec![]
                     },
                     AstNode::Heading {
+                        routing: None,
                         level: 2,
                         title: vec![BlockExprNode::Char('c')],
                         children: vec![]
@@ -127,6 +131,7 @@ fn parse_escapes_heading_level() -> Result<()> {
                 ]
             },
             AstNode::Heading {
+                routing: None,
                 level: 1,
                 title: vec![BlockExprNode::Char('d')],
                 children: vec![]
@@ -582,14 +587,24 @@ fn parses_link() -> Result<()> {
 #[test]
 fn parses_routing() -> Result<()> {
     assert_eq!(
-        parse_n_pass("* :/helo:\n")?,
+        parse_n_pass("* :/path: h\n")?,
         vec![AstNode::Heading {
             level: 1,
             children: vec![],
-            title: vec![BlockExprNode::Routing {
-                path: "/helo".to_string()
-            }]
-        }]
+            title: vec![BlockExprNode::Char('h')],
+            routing: Some(HeaderRouting::new("/path".to_string()))
+        }],
+        "\nensuring heading with routing parses with whitespaces"
+    );
+    assert_eq!(
+        parse_n_pass("*:/path:h\n")?,
+        vec![AstNode::Heading {
+            level: 1,
+            children: vec![],
+            title: vec![BlockExprNode::Char('h')],
+            routing: Some(HeaderRouting::new("/path".to_string()))
+        }],
+        "\nensuring heading with routing parses without whitespace"
     );
     Ok(())
 }

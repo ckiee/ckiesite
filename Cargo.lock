@@ -988,19 +988,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "org_doc"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "include_dir",
- "proc-macro2",
- "quote",
- "site_common",
- "syn",
-]
-
-[[package]]
 name = "orgish"
 version = "0.1.0"
 dependencies = [
@@ -1390,31 +1377,20 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "bincode",
  "cap-std",
  "clap",
  "html-minifier",
  "hyper",
  "include_dir",
  "lazy_static",
- "org_doc",
- "site_common",
+ "orgish",
+ "serde",
  "thiserror",
  "tokio",
  "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "site_common"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "include_dir",
- "orgish",
- "serde",
  "typed-html",
 ]
 

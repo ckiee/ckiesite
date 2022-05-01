@@ -20,6 +20,6 @@ tower-http = { version = "0.2.5", features = [ "fs" ] }
 cap-std = "0.24.2"
 lazy_static = "1.4.0"
 include_dir = "0.7.2"
-org_doc = { path = "../org_doc" }
-site_common = { path = "../site_common" }
-bincode = "1.3.3"
+serde = { version = "1.0", features = ["derive"]}
+typed-html = { git = "https://github.com/bodil/typed-html", rev = "e18d328951b6b9216976d180f3dea2e6600a3982"}
+orgish = { path = "../orgish" }

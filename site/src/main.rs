@@ -1,36 +1,19 @@
-use anyhow::anyhow;
+
 use axum::{
     handler::Handler,
-    response::{Html, IntoResponse, Response},
     Router,
 };
 use clap::Parser;
-use hyper::{Request, StatusCode, Uri};
-use include_dir::{include_dir, Dir};
-use lazy_static::lazy_static;
-use site_common::document::Document;
-use std::{collections::HashMap, net::SocketAddr, str::FromStr};
-use thiserror::Error;
+use hyper::{StatusCode};
+use std::{net::SocketAddr};
 use tracing::{debug, error};
 
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    Anyhow(#[from] anyhow::Error),
-}
 
-type Result<A> = std::result::Result<A, Error>;
+pub mod document;
+pub mod serve;
+pub mod result;
 
-impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        error!("error while serving request: {:#?}", &self);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "internal server error ):",
-        )
-            .into_response()
-    }
-}
+use result::Result;
 
 /// Frontend for orgish to serve website
 #[derive(Parser, Debug)]
@@ -60,7 +43,7 @@ async fn main() -> Result<()> {
         )
     };
 
-    let app = Router::new().fallback(fallback_handler.into_service());
+    let app = Router::new().fallback(serve::fallback_handler.into_service());
 
     let addr = SocketAddr::from((
         if args.everywhere {
@@ -76,39 +59,4 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
     Ok(())
-}
-
-static STATIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../data/static");
-
-lazy_static! {
-    static ref INDEX_ORG_URI: Uri = Uri::from_str("/index.org").unwrap();
-    static ref ORG_DOCS: HashMap<String, Document> = org_doc::org_docs!();
-}
-
-async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
-    let uri = if req.uri() == "/" {
-        &INDEX_ORG_URI
-    } else {
-        req.uri()
-    };
-
-    if uri.path().starts_with("/static") {
-        Ok(match STATIC_DIR.get_file(&uri.path()["/static/".len()..]) {
-            None => (StatusCode::NOT_FOUND, "):".to_string()).into_response(),
-            Some(f) => (
-                StatusCode::OK,
-                f.contents_utf8()
-                    .ok_or(anyhow!("file to be utf-8"))?
-                    .to_owned(),
-            )
-                .into_response(),
-        })
-    } else {
-        // we trim off the first byte since it's probably `/` and that doesn't match the hashmap keys
-        // sure do hope it's not some unicode scalar that will do really weird things and make us panic
-        Ok(match ORG_DOCS.get(&uri.path()[1..]) {
-            None => (StatusCode::NOT_FOUND, "):".to_string()).into_response(),
-            Some(f) => Html(f.render_page_html()?).into_response(),
-        })
-    }
 }

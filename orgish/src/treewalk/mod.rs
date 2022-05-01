@@ -28,7 +28,7 @@ fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
             children,
             level,
             title,
-            routing, // TODO use this to link?
+            routing: _, // TODO use this to link?
         } => format!(
             // In HTML headings do not have children as in our AST.
             "<h{level}>{title}</h{level}>{children}",
