@@ -1,8 +1,10 @@
 use std::{iter::Peekable, slice::Iter};
 
-use anyhow::{Result};
+use anyhow::Result;
 
-use super::{data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive};
+use super::{
+    data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive, HeaderRouting,
+};
 
 pub enum StopAt {
     NextHeadingWithLevel(u16),
@@ -28,16 +30,26 @@ pub fn flat_nodes_to_tree(
                 children: _,
                 level,
                 title,
-                routing
-            } => out.push(AstNode::Heading {
-                level: *level,
-                title: bet_pass(
+                routing,
+            } => {
+                let title_bet = bet_pass(
                     &mut title.iter().peekable(),
                     &mut BetPassState::new_with_ast_node(node.clone()),
-                )?,
-                children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level))?,
-                routing: routing.clone()
-            }),
+                )?;
+
+                // we have to do one more mini-pass to find this goddarn HeaderRouting thing
+                // because this is a bit more convenient for the user (:/path: can be at the end of the header title)
+                let routing = title_bet.iter().find_map::<HeaderRouting, _>(|n| match n {
+                    BlockExprNode::HeaderRouting(hr) => Some(hr.clone()),
+                    _ => None,
+                });
+                out.push(AstNode::Heading {
+                    level: *level,
+                    title: title_bet,
+                    children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level))?,
+                    routing,
+                })
+            }
 
             // Optimization: Linespace is not very useful in the final AST
             AstNode::Block(_, bet) if bet == &vec![BlockExprNode::Linespace] => {}
@@ -73,6 +85,8 @@ pub fn flat_nodes_to_tree(
 
 struct BetPassState {
     inside_nbsp: bool,
+    #[allow(unused)]
+    // keeping this for future things, doesn't really hurt anyone and it's quite annoying to remove it just to add it again later
     top_level_ast_node: AstNode,
 }
 

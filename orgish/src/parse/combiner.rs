@@ -198,14 +198,15 @@ where
         .message("while parsing inline_code")
 }
 
-fn header_routing<Input>() -> impl Parser<Input, Output = HeaderRouting>
+// This one is excluded from the BEN choice! since it's only valid in header title context.
+fn header_routing<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
     (token(':'), take_until(token(':')), token(':'))
-        .map(|(_, path, _)| HeaderRouting::new(path))
+        .map(|(_, path, _)| BlockExprNode::HeaderRouting(HeaderRouting { path }))
         .message("while parsing header routing")
 }
 
@@ -296,17 +297,15 @@ where
         whitespaces(),
         many1::<Vec<_>, _, _>(token('*')).map(|x: Vec<_>| x.len()),
         whitespaces(),
-        optional(header_routing()),
-        whitespaces(),
-        many1(block_expr_node()),
+        many1(choice!(header_routing(), block_expr_node())),
     )
-        .map(|(_, level, _, routing, _, title)| AstNode::Heading {
+        .map(|(_, level, _, title)| AstNode::Heading {
             level: level
                 .try_into()
                 .expect("the header level to be smaller than the maximum value of usize"),
             title,
             children: vec![], // we fill this in later
-            routing,
+            routing: None,    // this is processed in the second pass (./pass.rs)
         })
         .message("while parsing heading")
 }

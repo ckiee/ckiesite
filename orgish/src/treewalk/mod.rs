@@ -91,5 +91,6 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
                 None => panic!("unimplemented"),
             }
         )),
+        BlockExprNode::HeaderRouting(hr) => Ok("".to_string()) // TODO TODO TODO impl
     }
 }

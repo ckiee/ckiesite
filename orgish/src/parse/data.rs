@@ -1,3 +1,5 @@
+use std::fmt::{Display, Write, Pointer};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -31,6 +33,7 @@ pub enum BlockExprNode {
     Link(String, Option<BlockExprTree>),
     /// One or more newlines
     Linespace,
+    HeaderRouting(HeaderRouting)
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -49,11 +52,7 @@ pub enum Directive {
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct HeaderRouting {
-    path: String, // TODO: add options
-}
-
-impl HeaderRouting {
-    pub fn new(path: String) -> Self { Self { path } }
+    pub path: String, // TODO: add options
 }
 
 impl BlockExprNode {
@@ -67,3 +66,25 @@ impl BlockExprNode {
 
 pub type BlockExprTree = Vec<BlockExprNode>;
 pub type AbstractSyntaxTree = Vec<AstNode>;
+
+// impls
+
+impl Display for AstNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AstNode::Block(_, bet) => bet.fmt(f)?,
+            _ => {}
+        }
+        Ok(())
+    }
+}
+
+impl Display for BlockExprNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            &BlockExprNode::Char(c) => f.write_char(c)?,
+            _ => {}
+        }
+        Ok(())
+    }
+}
