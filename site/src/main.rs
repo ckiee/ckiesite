@@ -1,12 +1,12 @@
-
 use axum::{
     handler::Handler,
     Router,
 };
 use clap::Parser;
 use hyper::{StatusCode};
-use std::{net::SocketAddr};
+use std::{net::SocketAddr, path::{Path, PathBuf}};
 use tracing::{debug, error};
+use lazy_static::lazy_static;
 
 
 pub mod document;
@@ -18,7 +18,7 @@ use result::Result;
 /// Frontend for orgish to serve website
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-struct Args {
+pub struct Args {
     /// HTTP listening port
     #[clap(short, long, default_value_t = 13337)]
     port: u16,
@@ -26,13 +26,19 @@ struct Args {
     /// Listen on all interfaces instead of loopback
     #[clap(short, long)]
     everywhere: bool,
+
+    /// Path to the org folder
+    org_path: PathBuf
+}
+
+lazy_static! {
+    pub static ref ARGS: Args = Args::parse();
 }
 
 // TODO compile all the posts' raw content and cache that in memory
 // TODO serve posts
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = Args::parse();
     tracing_subscriber::fmt::init(); // loggy log, set RUST_LOG=debug
 
     let _error_handler = |e: std::io::Error| async move {
@@ -46,12 +52,12 @@ async fn main() -> Result<()> {
     let app = Router::new().fallback(serve::fallback_handler.into_service());
 
     let addr = SocketAddr::from((
-        if args.everywhere {
+        if ARGS.everywhere {
             [0, 0, 0, 0]
         } else {
             [127, 0, 0, 1]
         },
-        args.port,
+        ARGS.port,
     ));
     debug!("listening on {}", addr);
     axum::Server::bind(&addr)
