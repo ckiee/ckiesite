@@ -42,21 +42,18 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
                     .first()
                     .ok_or(anyhow!("couldn't guess mimetype for static file"))?
                     .to_string();
-                // TODO uncomment this and make it work after axum bump to 0.5.x
-                // let headers = HeaderMap::new();
-                // headers.insert(
-                //     CONTENT_TYPE,
-                //     HeaderValue::from_str(&mime)
-                // );
-
-                (
+                let mut resp = (
                     StatusCode::OK,
                     f.contents_utf8()
                         .ok_or(anyhow!("file to be utf-8"))?
                         .to_owned(),
-                    // headers,
                 )
-                    .into_response()
+                    .into_response();
+
+                resp.headers_mut()
+                    .insert(CONTENT_TYPE, HeaderValue::from_str(&mime).unwrap()); // TODO fix result mess so this can be ?Try
+
+                resp
             }
         })
     } else {
