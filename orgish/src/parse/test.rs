@@ -612,3 +612,5 @@ fn parses_routing() -> Result<()> {
     );
     Ok(())
 }
+
+// TODO test internal links

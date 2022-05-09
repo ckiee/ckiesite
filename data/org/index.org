@@ -3,6 +3,7 @@
 this is my /new new new new/ website. it is different from the other ones since it's no longer just some dumb static files.
 ** :@nav:
 # TODO add links to other pages here, no conditional yet
+[[*How this site's language works][How this site's language works]]
 ** who are you :#this:
 I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix][a lot of places]].
 - [[https://github.com/ckiee][=@ckiee= on Github]]

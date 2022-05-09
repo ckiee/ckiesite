@@ -10,9 +10,9 @@ use hyper::{
 };
 use include_dir::{include_dir, Dir as CompDir};
 use lazy_static::lazy_static;
-use liquid::{ParserBuilder, object};
+use liquid::{object, ParserBuilder};
 use orgish::{
-    parse::{parse_n_pass, AstNode, HeaderRouting, stringify_bet},
+    parse::{parse_n_pass, stringify_bet, AstNode, HeaderRouting},
     treewalk::ast_to_html_string,
 };
 use std::str::FromStr;
@@ -24,7 +24,8 @@ static STATIC_DIR: CompDir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../data/stati
 
 lazy_static! {
     static ref INDEX_URI: Uri = Uri::from_str("/index").unwrap();
-    static ref CONTENT_DIR: Dir = Dir::open_ambient_dir(&ARGS.content_path, ambient_authority()).unwrap();
+    static ref CONTENT_DIR: Dir =
+        Dir::open_ambient_dir(&ARGS.content_path, ambient_authority()).unwrap();
 }
 
 pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
@@ -57,13 +58,40 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
             }
         })
     } else {
-        let parser = ParserBuilder::with_stdlib().build()?;
-        let liquid_index = CONTENT_DIR.read_to_string("index.liquid")?;
-        let template = parser.parse(&liquid_index)?;
-        let globals = object!({
-             "req_path": format!("{}", uri)
-         });
+        let liquid_parser = ParserBuilder::with_stdlib().build()?;
+        let org_file = CONTENT_DIR.read_to_string("index.org")?;
+        let ast = parse_n_pass(&org_file)?;
 
-         Ok(Html(template.render(&globals)?.to_string()).into_response())
+        for node in ast {
+            match node {
+                // we trim off the first byte since it's probably `/` and that doesn't match the hashmap keys
+                // sure do hope it's not some unicode scalar that will do really weird things and make us panic
+                AstNode::Heading {
+                    routing: Some(route),
+                    title,
+                    children,
+                    ..
+                } if route.path == &uri.path()[1..] => {
+                    let html = ast_to_html_string(&children)?;
+                    let text_title = format!("{:?}", title);
+                    let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
+                    let template = liquid_parser.parse(&liquid_page)?;
+                    let globals = object!({
+                        "req_path": format!("{}", uri),
+                        "html": html,
+                        "title": stringify_bet(&title)?
+                    });
+
+                    return Ok(Html(template.render(&globals)?.to_string()).into_response());
+                }
+                _ => {}
+            }
+        }
+
+        Ok((
+            StatusCode::NOT_FOUND,
+            "nothing here yet.. politely go back to where you came from.".to_string(),
+        )
+            .into_response())
     }
 }
