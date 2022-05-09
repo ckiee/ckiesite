@@ -31,7 +31,7 @@ pub enum BlockExprNode {
     Strikethrough(BlockExprTree),
     NonbreakingSpace(BlockExprTree),
     Code(String),
-    Link(String, Option<BlockExprTree>),
+    Link(LinkTarget, Option<BlockExprTree>),
     /// One or more newlines
     Linespace,
     HeaderRouting(HeaderRouting)
@@ -49,6 +49,12 @@ pub enum Directive {
     Title(String),
     /// Pre-pass datatype
     Raw(String, String),
+}
+
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub enum LinkTarget {
+    Heading { title: String },
+    External(String)
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]

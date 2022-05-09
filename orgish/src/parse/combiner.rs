@@ -16,7 +16,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, HeaderRouting,
+    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, HeaderRouting, LinkTarget,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -205,7 +205,12 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    (token(':'), take_until(token(':')), token(':'), whitespaces())
+    (
+        token(':'),
+        take_until(token(':')),
+        token(':'),
+        whitespaces(),
+    )
         .map(|(_, path, _, _)| BlockExprNode::HeaderRouting(HeaderRouting { path }))
         .message("while parsing header routing")
 }
@@ -274,6 +279,7 @@ where
     (
         token('['),                             // [[https://ckie.dev][some /text/ with BENs]]
         token('['),                             // [https://ckie.dev]
+        optional(token('*')),                   // <internal link>
         take_until::<String, _, _>(token(']')), // https://ckie.dev
         token(']'),
         optional(
@@ -281,8 +287,15 @@ where
         ),
         token(']'),
     )
-        .map(|(_, _, link, _, maybe_bet, _)| {
-            BlockExprNode::Link(link, maybe_bet) // TODO implement this case properly (rec-parse like marker_char)
+        .map(|(_, _, internal, link, _, maybe_bet, _)| {
+            BlockExprNode::Link(
+                if internal.is_some() {
+                    LinkTarget::Heading { title: link }
+                } else {
+                    LinkTarget::External(link)
+                },
+                maybe_bet,
+            ) // TODO implement this case properly (rec-parse like marker_char)
         })
         .message("while parsing link")
 }

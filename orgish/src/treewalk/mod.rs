@@ -6,7 +6,7 @@ use anyhow::{anyhow, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
 use crate::parse::{
-    AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive,
+    AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
 };
 
 pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> Result<String> {
@@ -90,7 +90,10 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
         BlockExprNode::Code(verbatim) => Ok(format!(r#"<span class="code">{}</span>"#, verbatim)),
         BlockExprNode::Link(url, maybe_bet) => Ok(format!(
             r#"<a href="{}">{}</a>"#,
-            url,
+            match url {
+                LinkTarget::External(u) => u,
+                LinkTarget::Heading { title: t } => todo!()
+            },
             match maybe_bet {
                 Some(bet) => bet_to_html_string(bet)?,
                 None => panic!("unimplemented"),

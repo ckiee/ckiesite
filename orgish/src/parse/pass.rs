@@ -148,7 +148,7 @@ fn bet_pass(
                 state,
             )?)),
             BlockExprNode::Link(url, maybe_bet) => out.push(BlockExprNode::Link(
-                url.to_string(),
+                url.clone(),
                 match maybe_bet.as_ref() {
                     Some(bet) => Some(bet_pass(&mut bet.iter().peekable(), state)?),
                     None => None,
