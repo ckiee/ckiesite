@@ -32,17 +32,18 @@ pub fn flat_nodes_to_tree(
                 title,
                 routing: _,
             } => {
+                // we have to do one more mini-pass to find this goddarn HeaderRouting thing
+                // because this is a bit more convenient for the user (:/path: can be at the end of the header title)
+                let routing = title.iter().find_map::<HeaderRouting, _>(|n| match n {
+                    BlockExprNode::HeaderRouting(hr) => Some(hr.clone()),
+                    _ => None,
+                });
+
                 let title_bet = bet_pass(
                     &mut title.iter().peekable(),
                     &mut BetPassState::new_with_ast_node(node.clone()),
                 )?;
 
-                // we have to do one more mini-pass to find this goddarn HeaderRouting thing
-                // because this is a bit more convenient for the user (:/path: can be at the end of the header title)
-                let routing = title_bet.iter().find_map::<HeaderRouting, _>(|n| match n {
-                    BlockExprNode::HeaderRouting(hr) => Some(hr.clone()),
-                    _ => None,
-                });
                 out.push(AstNode::Heading {
                     level: *level,
                     title: title_bet,

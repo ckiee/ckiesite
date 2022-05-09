@@ -205,8 +205,8 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    (token(':'), take_until(token(':')), token(':'))
-        .map(|(_, path, _)| BlockExprNode::HeaderRouting(HeaderRouting { path }))
+    (token(':'), take_until(token(':')), token(':'), whitespaces())
+        .map(|(_, path, _, _)| BlockExprNode::HeaderRouting(HeaderRouting { path }))
         .message("while parsing header routing")
 }
 

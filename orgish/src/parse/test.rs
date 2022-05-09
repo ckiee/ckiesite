@@ -592,7 +592,9 @@ fn parses_routing() -> Result<()> {
             level: 1,
             children: vec![],
             title: vec![BlockExprNode::Char('h')],
-            routing: Some(HeaderRouting::new("/path".to_string()))
+            routing: Some(HeaderRouting {
+                path: "/path".to_string()
+            })
         }],
         "\nensuring heading with routing parses with whitespaces"
     );
@@ -602,7 +604,9 @@ fn parses_routing() -> Result<()> {
             level: 1,
             children: vec![],
             title: vec![BlockExprNode::Char('h')],
-            routing: Some(HeaderRouting::new("/path".to_string()))
+            routing: Some(HeaderRouting {
+                path: "/path".to_string()
+            })
         }],
         "\nensuring heading with routing parses without whitespace"
     );
