@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive, HeaderRouting};
+use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive, HeaderRouting, LinkTarget};
 
 use super::data::AstNode;
 
@@ -526,7 +526,7 @@ fn parses_link() -> Result<()> {
         vec![AstNode::Block(
             BlockType::Block,
             vec![BlockExprNode::Link(
-                "https://example.com/some-path".to_string(),
+                LinkTarget::External("https://example.com/some-path".to_string()),
                 Some(vec![
                     BlockExprNode::Char('h'),
                     BlockExprNode::Char('e'),
@@ -542,7 +542,7 @@ fn parses_link() -> Result<()> {
         vec![AstNode::Block(
             BlockType::Block,
             vec![BlockExprNode::Link(
-                "https://example.com/some-path".to_string(),
+                LinkTarget::External("https://example.com/some-path".to_string()),
                 None
             )]
         )]
@@ -557,7 +557,7 @@ fn parses_link() -> Result<()> {
                 BlockExprNode::Char('n'),
                 BlockExprNode::Char(' '),
                 BlockExprNode::Link(
-                    "https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix".to_string(),
+                    LinkTarget::External("https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix".to_string()),
                     Some(vec![
                         BlockExprNode::Char('a'),
                         BlockExprNode::Char(' '),

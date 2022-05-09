@@ -5,18 +5,17 @@ use axum::{
 };
 use cap_std::{ambient_authority, fs::Dir};
 use hyper::{
-    header::{self, CONTENT_TYPE},
-    HeaderMap, Request, StatusCode, Uri,
+    header::{CONTENT_TYPE}, Request, StatusCode, Uri,
 };
 use include_dir::{include_dir, Dir as CompDir};
 use lazy_static::lazy_static;
 use liquid::{object, ParserBuilder};
 use orgish::{
-    parse::{parse_n_pass, stringify_bet, AstNode, HeaderRouting},
+    parse::{parse_n_pass, stringify_bet, AstNode},
     treewalk::ast_to_html_string,
 };
 use std::str::FromStr;
-use typed_html::{dom::DOMTree, html, text, unsafe_text};
+
 
 use crate::ARGS;
 
@@ -73,7 +72,7 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                     ..
                 } if route.path == &uri.path()[1..] => {
                     let html = ast_to_html_string(&children)?;
-                    let text_title = format!("{:?}", title);
+                    let _text_title = format!("{:?}", title);
                     let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
                     let template = liquid_parser.parse(&liquid_page)?;
                     let globals = object!({
@@ -82,7 +81,7 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                         "title": stringify_bet(&title)?
                     });
 
-                    return Ok(Html(template.render(&globals)?.to_string()).into_response());
+                    return Ok(Html(template.render(&globals)?).into_response());
                 }
                 _ => {}
             }

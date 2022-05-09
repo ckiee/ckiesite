@@ -1,4 +1,4 @@
-use std::fmt::{Display, Write, Pointer, Formatter};
+use std::fmt::{Display, Write, Pointer};
 use anyhow::Result;
 
 use serde::{Deserialize, Serialize};

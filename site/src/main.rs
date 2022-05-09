@@ -1,14 +1,12 @@
-use axum::{error_handling::HandleError, handler::Handler, response::IntoResponse, Router};
+use axum::{error_handling::HandleError, handler::Handler, Router};
 use clap::Parser;
-use hyper::{Request, Response, StatusCode};
+use hyper::{StatusCode};
 use lazy_static::lazy_static;
 use std::{
-    convert::Infallible,
-    future::Future,
     net::SocketAddr,
-    path::{Path, PathBuf},
+    path::{PathBuf},
 };
-use tower::{service_fn, util::ServiceFn, Service};
+use tower::{service_fn};
 use tracing::{debug, error};
 
 pub mod document;

@@ -92,13 +92,13 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
             r#"<a href="{}">{}</a>"#,
             match url {
                 LinkTarget::External(u) => u,
-                LinkTarget::Heading { title: t } => todo!()
+                LinkTarget::Heading { title: _t } => todo!()
             },
             match maybe_bet {
                 Some(bet) => bet_to_html_string(bet)?,
                 None => panic!("unimplemented"),
             }
         )),
-        BlockExprNode::HeaderRouting(hr) => unreachable,
+        BlockExprNode::HeaderRouting(_hr) => unreachable,
     }
 }
