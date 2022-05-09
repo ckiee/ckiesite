@@ -24,3 +24,4 @@ serde = { version = "1.0", features = ["derive"]}
 typed-html = { git = "https://github.com/bodil/typed-html", rev = "e18d328951b6b9216976d180f3dea2e6600a3982"}
 orgish = { path = "../orgish" }
 mime_guess = "2.0.4"
+liquid = "0.26.0"

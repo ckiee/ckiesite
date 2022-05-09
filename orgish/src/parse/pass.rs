@@ -30,7 +30,7 @@ pub fn flat_nodes_to_tree(
                 children: _,
                 level,
                 title,
-                routing,
+                routing: _,
             } => {
                 let title_bet = bet_pass(
                     &mut title.iter().peekable(),
@@ -153,6 +153,8 @@ fn bet_pass(
                     None => None,
                 },
             )),
+            // we discard HeaderRoutings since they should have already been looked ahead for
+            BlockExprNode::HeaderRouting(..) => {}
             other => out.push(other.clone()),
         }
     }

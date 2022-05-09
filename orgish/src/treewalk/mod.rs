@@ -28,13 +28,17 @@ fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
             children,
             level,
             title,
-            routing: _, // TODO use this to link?
+            routing, // TODO use this to link?
         } => format!(
             // In HTML headings do not have children as in our AST.
-            "<h{level}>{title}</h{level}>{children}",
+            "<h{level} {id}>{title}</h{level}>{children}",
             level = level,
             title = bet_to_html_string(title)?,
-            children = ast_to_html_string(children)?
+            children = ast_to_html_string(children)?,
+            id = match routing {
+                Some(hr) => format!(r#"id="r-{}""#, hr.path),
+                None => "".to_string(),
+            }
         ),
         AstNode::Block(BlockType::Block, bet) => {
             format!("<p>{}</p>", bet_to_html_string(bet)?)
@@ -69,13 +73,14 @@ fn bet_to_html_string(nodes: &BlockExprTree) -> Result<String> {
 }
 
 fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
+    let unreachable = Err(anyhow!(
+        "illegal node {:?}; parser pass should have eliminated this",
+        node
+    ));
     match node {
         BlockExprNode::Bold(bet) => Ok(format!("<strong>{}</strong>", bet_to_html_string(bet)?)),
         BlockExprNode::Char(c) => Ok(c.to_string()),
-        BlockExprNode::Linespace | BlockExprNode::NonbreakingSpace(_) => Err(anyhow!(
-            "illegal node {:?}; parser pass should have eliminated this",
-            node
-        )),
+        BlockExprNode::Linespace | BlockExprNode::NonbreakingSpace(_) => unreachable,
         BlockExprNode::Italic(bet) => Ok(format!("<em>{}</em>", bet_to_html_string(bet)?)),
         BlockExprNode::Underline(bet) => Ok(format!(
             "<span class=\"underline\">{}</span>",
@@ -91,6 +96,6 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
                 None => panic!("unimplemented"),
             }
         )),
-        BlockExprNode::HeaderRouting(hr) => Ok("".to_string()) // TODO TODO TODO impl
+        BlockExprNode::HeaderRouting(hr) => unreachable,
     }
 }

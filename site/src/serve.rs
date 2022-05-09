@@ -1,5 +1,4 @@
-use crate::result::{Error, Result};
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use axum::{
     http::HeaderValue,
     response::{Html, IntoResponse, Response},
@@ -11,8 +10,9 @@ use hyper::{
 };
 use include_dir::{include_dir, Dir as CompDir};
 use lazy_static::lazy_static;
+use liquid::{ParserBuilder, object};
 use orgish::{
-    parse::{parse_n_pass, AstNode, HeaderRouting},
+    parse::{parse_n_pass, AstNode, HeaderRouting, stringify_bet},
     treewalk::ast_to_html_string,
 };
 use std::str::FromStr;
@@ -24,10 +24,10 @@ static STATIC_DIR: CompDir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../data/stati
 
 lazy_static! {
     static ref INDEX_URI: Uri = Uri::from_str("/index").unwrap();
-    static ref ORG_DIR: Dir = Dir::open_ambient_dir(&ARGS.org_path, ambient_authority()).unwrap();
+    static ref CONTENT_DIR: Dir = Dir::open_ambient_dir(&ARGS.content_path, ambient_authority()).unwrap();
 }
 
-pub async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
+pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
     let uri = if req.uri() == "/" {
         &INDEX_URI
     } else {
@@ -57,55 +57,13 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<impl IntoResponse> {
             }
         })
     } else {
-        // we trim off the first byte since it's probably `/` and that doesn't match the hashmap keys
-        // sure do hope it's not some unicode scalar that will do really weird things and make us panic
-        // Ok(match ORG_DOCS.get(&uri.path()[1..]) {
-        //     None => (StatusCode::NOT_FOUND, "):".to_string()).into_response(),
-        //     Some(f) => Html(f.render_page_html()?).into_response(),
-        // })
-        let file = ORG_DIR.read_to_string("index.org")?;
-        let ast = parse_n_pass(&file)?;
+        let parser = ParserBuilder::with_stdlib().build()?;
+        let liquid_index = CONTENT_DIR.read_to_string("index.liquid")?;
+        let template = parser.parse(&liquid_index)?;
+        let globals = object!({
+             "req_path": format!("{}", uri)
+         });
 
-        for node in ast {
-            match node {
-                AstNode::Heading {
-                    routing: Some(route),
-                    title,
-                    children,
-                    ..
-                } if route.path == &uri.path()[1..] => {
-                    let html = ast_to_html_string(&children)?;
-                    let text_title = format!("{:?}", title);
-                    let doc: DOMTree<String> = html!(
-                        <html>
-                            <head>
-                            <title>{ text!(text_title) }</title>
-                            <link rel="stylesheet" href="/static/style.css"></link>
-                            </head>
-
-                            <body>
-                                <header>
-                                    <p>"hi"</p>
-                                </header>
-
-                                <main>
-                                    { unsafe_text!(html) }
-                                </main>
-                            </body>
-
-                        </html>
-                    );
-
-                    return Ok(Html(format!("<!DOCTYPE html>{}", doc)).into_response());
-                }
-                _ => {}
-            }
-        }
-
-        Ok((
-            StatusCode::NOT_FOUND,
-            "nothing here yet.. politely go back to where you came from.".to_string(),
-        )
-            .into_response())
+         Ok(Html(template.render(&globals)?.to_string()).into_response())
     }
 }

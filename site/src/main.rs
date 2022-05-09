@@ -1,19 +1,18 @@
-use axum::{
-    handler::Handler,
-    Router,
-};
+use axum::{error_handling::HandleError, handler::Handler, response::IntoResponse, Router};
 use clap::Parser;
-use hyper::{StatusCode};
-use std::{net::SocketAddr, path::{Path, PathBuf}};
-use tracing::{debug, error};
+use hyper::{Request, Response, StatusCode};
 use lazy_static::lazy_static;
-
+use std::{
+    convert::Infallible,
+    future::Future,
+    net::SocketAddr,
+    path::{Path, PathBuf},
+};
+use tower::{service_fn, util::ServiceFn, Service};
+use tracing::{debug, error};
 
 pub mod document;
 pub mod serve;
-pub mod result;
-
-use result::Result;
 
 /// Frontend for orgish to serve website
 #[derive(Parser, Debug)]
@@ -27,29 +26,23 @@ pub struct Args {
     #[clap(short, long)]
     everywhere: bool,
 
-    /// Path to the org folder
-    org_path: PathBuf
+    /// Path to the content folder
+    content_path: PathBuf,
 }
 
 lazy_static! {
     pub static ref ARGS: Args = Args::parse();
 }
 
-// TODO compile all the posts' raw content and cache that in memory
-// TODO serve posts
+// TODO serve ~~posts~~ liquid
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init(); // loggy log, set RUST_LOG=debug
 
-    let _error_handler = |e: std::io::Error| async move {
-        error!("io error while serving static data: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "io error while serving static data",
-        )
-    };
-
-    let app = Router::new().fallback(serve::fallback_handler.into_service());
+    let app = Router::new().fallback(HandleError::new(
+        service_fn(serve::fallback_handler),
+        handle_anyhow_error,
+    ));
 
     let addr = SocketAddr::from((
         if ARGS.everywhere {
@@ -65,4 +58,12 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
     Ok(())
+}
+
+pub async fn handle_anyhow_error(err: anyhow::Error) -> (StatusCode, String) {
+    error!("error while serving request: {:#?}", err);
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "500 oopsie doopsie".to_string(),
+    )
 }

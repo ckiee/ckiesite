@@ -1,4 +1,5 @@
-use std::fmt::{Display, Write, Pointer};
+use std::fmt::{Display, Write, Pointer, Formatter};
+use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
 
@@ -87,4 +88,12 @@ impl Display for BlockExprNode {
         }
         Ok(())
     }
+}
+
+pub fn stringify_bet(bet: &Vec<BlockExprNode>) -> Result<String> {
+    let mut buf = String::new();
+    for ben in bet {
+        write!(&mut buf, "{}", ben)?;
+    }
+    Ok(buf)
 }
