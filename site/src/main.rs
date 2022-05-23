@@ -1,4 +1,4 @@
-use axum::{error_handling::HandleError, handler::Handler, Router};
+use axum::{error_handling::HandleError, Router};
 use clap::Parser;
 use hyper::{StatusCode};
 use lazy_static::lazy_static;
@@ -9,7 +9,6 @@ use std::{
 use tower::{service_fn};
 use tracing::{debug, error};
 
-pub mod document;
 pub mod serve;
 
 /// Frontend for orgish to serve website
@@ -32,7 +31,6 @@ lazy_static! {
     pub static ref ARGS: Args = Args::parse();
 }
 
-// TODO serve ~~posts~~ liquid
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init(); // loggy log, set RUST_LOG=debug

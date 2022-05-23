@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive, HeaderRouting, LinkTarget};
+use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive, LinkTarget, Route};
 
 use super::data::AstNode;
 
@@ -592,9 +592,7 @@ fn parses_routing() -> Result<()> {
             level: 1,
             children: vec![],
             title: vec![BlockExprNode::Char('h')],
-            routing: Some(HeaderRouting {
-                path: "/path".to_string()
-            })
+            routing: Some(Route::Page("/path".to_string()))
         }],
         "\nensuring heading with routing parses with whitespaces"
     );
@@ -604,9 +602,7 @@ fn parses_routing() -> Result<()> {
             level: 1,
             children: vec![],
             title: vec![BlockExprNode::Char('h')],
-            routing: Some(HeaderRouting {
-                path: "/path".to_string()
-            })
+            routing: Some(Route::Page("/path".to_string()))
         }],
         "\nensuring heading with routing parses without whitespace"
     );

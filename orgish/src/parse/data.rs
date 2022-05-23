@@ -15,7 +15,7 @@ pub enum AstNode {
         level: u16,
         title: BlockExprTree,
         children: AbstractSyntaxTree,
-        routing: Option<HeaderRouting>,
+        routing: Option<Route>,
     },
     Block(BlockType, BlockExprTree),
     /// Equivalent to html <hr>
@@ -34,7 +34,7 @@ pub enum BlockExprNode {
     Link(LinkTarget, Option<BlockExprTree>),
     /// One or more newlines
     Linespace,
-    HeaderRouting(HeaderRouting)
+    HeaderRouting(Route)
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -58,8 +58,15 @@ pub enum LinkTarget {
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
-pub struct HeaderRouting {
-    pub path: String, // TODO: add options
+pub enum Route {
+    Page(String),       // index
+    Section(String),    // #how
+    RenderGroup(RenderGroup) // @rg
+}
+
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub enum RenderGroup {
+    Nav // nav
 }
 
 impl BlockExprNode {

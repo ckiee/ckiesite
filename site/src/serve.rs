@@ -11,7 +11,7 @@ use include_dir::{include_dir, Dir as CompDir};
 use lazy_static::lazy_static;
 use liquid::{object, ParserBuilder};
 use orgish::{
-    parse::{parse_n_pass, stringify_bet, AstNode},
+    parse::{parse_n_pass, stringify_bet, AstNode, Route},
     treewalk::ast_to_html_string,
 };
 use std::str::FromStr;
@@ -66,12 +66,12 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                 // we trim off the first byte since it's probably `/` and that doesn't match the hashmap keys
                 // sure do hope it's not some unicode scalar that will do really weird things and make us panic
                 AstNode::Heading {
-                    routing: Some(route),
+                    routing: Some(Route::Page(pg)),
                     title,
                     children,
                     ..
-                } if route.path == &uri.path()[1..] => {
-                    let html = ast_to_html_string(&children)?;
+                } if pg == &uri.path()[1..] => {
+                    let html = ast_to_html_string(&children, None)?; // TODO actually use Some(..RenderGroup
                     let _text_title = format!("{:?}", title);
                     let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
                     let template = liquid_parser.parse(&liquid_page)?;

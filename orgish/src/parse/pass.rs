@@ -3,7 +3,7 @@ use std::{iter::Peekable, slice::Iter};
 use anyhow::Result;
 
 use super::{
-    data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive, HeaderRouting,
+    data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive, Route,
 };
 
 pub enum StopAt {
@@ -34,8 +34,8 @@ pub fn flat_nodes_to_tree(
             } => {
                 // we have to do one more mini-pass to find this goddarn HeaderRouting thing
                 // because this is a bit more convenient for the user (:/path: can be at the end of the header title)
-                let routing = title.iter().find_map::<HeaderRouting, _>(|n| match n {
-                    BlockExprNode::HeaderRouting(hr) => Some(hr.clone()),
+                let routing = title.iter().find_map::<Route, _>(|n| match n {
+                    BlockExprNode::HeaderRouting(route) => Some(route.clone()),
                     _ => None,
                 });
 

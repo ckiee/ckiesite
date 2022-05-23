@@ -38,7 +38,7 @@ fn main() -> Result<()> {
         eprintln!("{:#?}", ast);
     }
 
-    let html = ast_to_html_string(&ast)?;
+    let html = ast_to_html_string(&ast, None)?;
 
     println!("{}", html);
 

@@ -7,17 +7,21 @@ use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing
 
 use crate::parse::{
     AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
+    RenderGroup,
 };
 
-pub fn ast_to_html_string(nodes: &AbstractSyntaxTree) -> Result<String> {
+pub fn ast_to_html_string(
+    nodes: &AbstractSyntaxTree,
+    render_group: Option<RenderGroup>,
+) -> Result<String> {
     let mut buf = String::with_capacity(4096);
     for node in nodes {
-        buf.push_str(&ast_node_to_html_string(node)?);
+        buf.push_str(&ast_node_to_html_string(node, &render_group)?);
     }
     Ok(buf)
 }
 
-fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
+fn ast_node_to_html_string(node: &AstNode, rg: &Option<RenderGroup>) -> Result<String> {
     Ok(match node {
         AstNode::Directive(d) => match d {
             Directive::Raw(_, _) => unreachable!(),
@@ -34,9 +38,9 @@ fn ast_node_to_html_string(node: &AstNode) -> Result<String> {
             "<h{level} {id}>{title}</h{level}>{children}",
             level = level,
             title = bet_to_html_string(title)?,
-            children = ast_to_html_string(children)?,
+            children = ast_to_html_string(children, rg.clone())?,
             id = match routing {
-                Some(hr) => format!(r#"id="r-{}""#, hr.path),
+                Some(route) => "TODO".to_string(),
                 None => "".to_string(),
             }
         ),
@@ -92,7 +96,7 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
             r#"<a href="{}">{}</a>"#,
             match url {
                 LinkTarget::External(u) => u,
-                LinkTarget::Heading { title: _t } => todo!()
+                LinkTarget::Heading { title: _t } => "TODO",
             },
             match maybe_bet {
                 Some(bet) => bet_to_html_string(bet)?,

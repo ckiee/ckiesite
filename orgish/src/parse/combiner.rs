@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use combine::{
-    attempt, between, choice, many1, opaque, optional,
+    attempt, between, choice, eof, many1, opaque, optional,
     parser::char::{alpha_num, newline},
     parser::{
         char::string,
@@ -16,7 +16,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, HeaderRouting, LinkTarget,
+    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup, Route,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -105,7 +105,7 @@ where
 {
     opaque!(no_partial(
         choice!(
-            link(),
+            attempt(link()),
             inline_code(),
             attempt(nbsp()),
             bold(),
@@ -161,6 +161,8 @@ where
     let end_1 = end();
     let end_2 = end();
     (
+
+        position(),
         start,
         (position(), take_until::<String, _, _>(end_1)).flat_map(|(pos, s)| {
             // HACK ouch ouch ouch
@@ -174,7 +176,7 @@ where
         }),
         end_2,
     )
-        .map(|(_, v, _)| v)
+        .map(|(start_pos, _, v, _)| {println!("{start_pos}");v})
         .message("while parsing marker_chars")
 }
 
@@ -205,14 +207,28 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    (
-        token(':'),
-        take_until(token(':')),
-        token(':'),
-        whitespaces(),
-    )
-        .map(|(_, path, _, _)| BlockExprNode::HeaderRouting(HeaderRouting { path }))
+    (internal_routing(), whitespaces())
+        .map(|(route, _)| BlockExprNode::HeaderRouting(route))
         .message("while parsing header routing")
+}
+
+// this one parses the whole :thing: because that avoids another painful subparse
+fn internal_routing<Input>() -> impl Parser<Input, Output = Route>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display,
+{
+    let local_eof = || token(':');
+    let subparser = choice!(
+        (token('#'), take_until(local_eof())).map(|(_, s)| Route::Section(s)),
+        (token('@'), string("nav")).map(|(_, _)| Route::RenderGroup(RenderGroup::Nav)),
+        take_until(local_eof()).map(|s| Route::Page(s))
+    );
+
+    (token(':'), subparser, token(':'))
+        .map(|(_, route, _)| route)
+        .message("while parsing internal routing")
 }
 
 fn bold<Input>() -> impl Parser<Input, Output = BlockExprNode>
