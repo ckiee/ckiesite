@@ -62,7 +62,7 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
         let ast = parse_n_pass(&org_file)?;
 
         for node in ast {
-            match node {
+            match &node.inner {
                 // we trim off the first byte since it's probably `/` and that doesn't match the hashmap keys
                 // sure do hope it's not some unicode scalar that will do really weird things and make us panic
                 AstNode::Heading {

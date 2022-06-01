@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use super::{
     data::AstNode, AbstractSyntaxTree, BackreferencedAst, BlockExprNode, BlockExprTree, Directive,
-    NestedAstNode, Route,
+    BackreferencedAstNode, Route,
 };
 
 pub enum StopAt {
@@ -19,7 +19,7 @@ pub enum StopAt {
 pub fn flat_nodes_to_tree(
     nodes: &mut Peekable<Iter<AstNode>>,
     stop_at: StopAt,
-    parent: Option<Weak<NestedAstNode>>,
+    _parent: Option<Weak<BackreferencedAstNode>>,
 ) -> Result<BackreferencedAst> {
     let mut out: AbstractSyntaxTree = vec![];
     while let Some(node) = {
@@ -40,6 +40,7 @@ pub fn flat_nodes_to_tree(
             } => {
                 // we have to do one more mini-pass to find this goddarn HeaderRouting thing
                 // because this is a bit more convenient for the user (:/path: can be at the end of the header title)
+                // TODO move into pass2 maybe?
                 let routing = title.iter().find_map::<Route, _>(|n| match n {
                     BlockExprNode::HeaderRouting(route) => Some(route.clone()),
                     _ => None,
@@ -94,7 +95,7 @@ pub fn flat_nodes_to_tree(
 
     Ok(out
         .into_iter()
-        .map(|inner| NestedAstNode {
+        .map(|inner| BackreferencedAstNode {
             inner,
             parent: None,
         })

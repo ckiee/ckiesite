@@ -23,9 +23,9 @@ pub enum AstNode {
 }
 
 #[derive(Debug, Clone)]
-pub struct NestedAstNode {
-    parent: Option<Weak<NestedAstNode>>, // None means a top-level element
-    inner: AstNode
+pub struct BackreferencedAstNode {
+    pub parent: Option<Weak<BackreferencedAstNode>>, // None means a top-level element
+    pub inner: AstNode
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -86,7 +86,7 @@ impl BlockExprNode {
 
 pub type BlockExprTree = Vec<BlockExprNode>;
 pub type AbstractSyntaxTree = Vec<AstNode>;
-pub type BackreferencedAst = Vec<NestedAstNode>;
+pub type BackreferencedAst = Vec<BackreferencedAstNode>;
 
 // impls
 

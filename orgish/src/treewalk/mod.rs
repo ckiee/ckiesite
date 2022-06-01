@@ -7,11 +7,11 @@ use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing
 
 use crate::parse::{
     AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
-    RenderGroup,
+    RenderGroup, BackreferencedAst, BackreferencedAstNode,
 };
 
 pub fn ast_to_html_string(
-    nodes: &AbstractSyntaxTree,
+    nodes: &BackreferencedAst,
     render_group: Option<RenderGroup>,
 ) -> Result<String> {
     let mut buf = String::with_capacity(4096);
@@ -21,8 +21,8 @@ pub fn ast_to_html_string(
     Ok(buf)
 }
 
-fn ast_node_to_html_string(node: &AstNode, rg: &Option<RenderGroup>) -> Result<String> {
-    Ok(match node {
+fn ast_node_to_html_string(node: &BackreferencedAstNode, rg: &Option<RenderGroup>) -> Result<String> {
+    Ok(match &node.inner {
         AstNode::Directive(d) => match d {
             Directive::Raw(_, _) => unreachable!(),
             // TODO Meh, maybe return Result<Option<String>>
