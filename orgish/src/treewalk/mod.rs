@@ -38,7 +38,8 @@ fn ast_node_to_html_string(node: &BackreferencedAstNode, rg: &Option<RenderGroup
             "<h{level} {id}>{title}</h{level}>{children}",
             level = level,
             title = bet_to_html_string(title)?,
-            children = ast_to_html_string(children, rg.clone())?,
+            // TODO: remove unwrap
+            children = ast_to_html_string(&children.upgrade().unwrap(), rg.clone())?,
             id = match routing {
                 Some(route) => "TODO".to_string(),
                 None => "".to_string(),

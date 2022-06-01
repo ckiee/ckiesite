@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Write, Pointer}, rc::Weak};
+use std::{fmt::{Display, Write, Pointer}, sync::{Weak, Arc}};
 use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub enum AstNode {
     Heading {
         level: u16,
         title: BlockExprTree,
-        children: BackreferencedAst,
+        children: Vec<Arc<BackreferencedAstNode>>,
         routing: Option<Route>,
     },
     Block(BlockType, BlockExprTree),
