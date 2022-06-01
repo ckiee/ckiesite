@@ -1,9 +1,10 @@
-use std::{iter::Peekable, slice::Iter};
+use std::{iter::Peekable, rc::Weak, slice::Iter, sync::Arc};
 
 use anyhow::Result;
 
 use super::{
-    data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive, Route,
+    data::AstNode, AbstractSyntaxTree, BackreferencedAst, BlockExprNode, BlockExprTree, Directive,
+    NestedAstNode, Route,
 };
 
 pub enum StopAt {
@@ -11,10 +12,15 @@ pub enum StopAt {
     Eof,
 }
 
+/// Transform a flat node stream into a tree by recursing.
+///
+/// Back references to the parent nodes do not exist in this function's output.
+/// Instead, they are created in a separate pass
 pub fn flat_nodes_to_tree(
     nodes: &mut Peekable<Iter<AstNode>>,
     stop_at: StopAt,
-) -> Result<AbstractSyntaxTree> {
+    parent: Option<Weak<NestedAstNode>>,
+) -> Result<BackreferencedAst> {
     let mut out: AbstractSyntaxTree = vec![];
     while let Some(node) = {
         match stop_at {
@@ -47,7 +53,12 @@ pub fn flat_nodes_to_tree(
                 out.push(AstNode::Heading {
                     level: *level,
                     title: title_bet,
-                    children: flat_nodes_to_tree(nodes, StopAt::NextHeadingWithLevel(*level))?,
+                    // XXX: Backreferences in children do not exist yet. Do that in another phase.
+                    children: flat_nodes_to_tree(
+                        nodes,
+                        StopAt::NextHeadingWithLevel(*level),
+                        None,
+                    )?,
                     routing,
                 })
             }
@@ -81,7 +92,13 @@ pub fn flat_nodes_to_tree(
         }
     }
 
-    Ok(out)
+    Ok(out
+        .into_iter()
+        .map(|inner| NestedAstNode {
+            inner,
+            parent: None,
+        })
+        .collect::<Vec<_>>())
 }
 
 struct BetPassState {

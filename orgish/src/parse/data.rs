@@ -1,9 +1,9 @@
-use std::fmt::{Display, Write, Pointer};
+use std::{fmt::{Display, Write, Pointer}, rc::Weak};
 use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum AstNode {
     SourceBlock {
         language: String,
@@ -14,12 +14,18 @@ pub enum AstNode {
     Heading {
         level: u16,
         title: BlockExprTree,
-        children: AbstractSyntaxTree,
+        children: BackreferencedAst,
         routing: Option<Route>,
     },
     Block(BlockType, BlockExprTree),
     /// Equivalent to html <hr>
     HorizRule,
+}
+
+#[derive(Debug, Clone)]
+pub struct NestedAstNode {
+    parent: Option<Weak<NestedAstNode>>, // None means a top-level element
+    inner: AstNode
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -80,6 +86,7 @@ impl BlockExprNode {
 
 pub type BlockExprTree = Vec<BlockExprNode>;
 pub type AbstractSyntaxTree = Vec<AstNode>;
+pub type BackreferencedAst = Vec<NestedAstNode>;
 
 // impls
 
