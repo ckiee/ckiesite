@@ -2,16 +2,81 @@
 <html>
 <head>
   <title>{{ title }}</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/normalize.css">
+  <style>
+    main {
+        margin: auto auto;
+        max-width: 650px;
+        line-height: 1.6;
+        font-size: 18px;
+    }
+    html {
+        color: #444;
+        background: #EEEEEE;
+    }
+    body {
+        margin: 20px;
+    }
+
+    a {
+        text-decoration: none;
+        outline: none;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        line-height: 1.2;
+    }
+    span.underline {
+        text-decoration: underline;
+    }
+    span.code {
+        font-family: monospace;
+    }
+
+    header {
+        display: flex;
+        gap: 1em;
+        flex-grow: 0;
+    }
+
+    #cookie-icon, #cookie-icon-cont {
+        height: 8vh;
+    }
+
+    #header-left-links {
+        display: flex;
+        align-items: flex-start;
+        gap: 1em;
+        flex-flow: wrap;
+    }
+
+    #header-left-links .separator {
+        user-select: none;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <ul>
-      <li><a>{{ title }}</a></li>
-    </ul>
+    <a href="/" id="cookie-icon-cont">
+      <img id="cookie-icon" src="/static/cookienomblob.svg" alt="Cookie emoji eating another emoji">
+    </a>
+    <nav id="header-left-links">
+      <a href="/">cookie</a>
+      <span class="separator">|</span>
+      <div>one two three</div>
+      <span class="separator">|</span>
+      <div>aybece</div>
+      <span class="separator">|</span>
+      <div>defghk</div>
+      <span class="separator">|</span>
+      <div>four two three</div>
+      <span class="separator">|</span>
+      <div>aufhsdf</div>
+      <span class="separator">|</span>
+      <div>igj</div>
+    </nav>
   </header>
   <main>
-    TODO
+    {{ html }}
   </main>
 </body>
 </html>
