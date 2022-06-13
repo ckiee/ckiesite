@@ -4,18 +4,15 @@ use axum::{
     response::{Html, IntoResponse, Response},
 };
 use cap_std::{ambient_authority, fs::Dir};
-use hyper::{
-    header::{CONTENT_TYPE}, Request, StatusCode, Uri,
-};
+use hyper::{header::CONTENT_TYPE, Request, StatusCode, Uri};
 use include_dir::{include_dir, Dir as CompDir};
 use lazy_static::lazy_static;
 use liquid::{object, ParserBuilder};
 use orgish::{
-    parse::{parse_n_pass, stringify_bet, AstNode, Route},
+    parse::{parse_n_pass, stringify_bet, AstNode, Route, RenderGroup},
     treewalk::ast_to_html_string,
 };
 use std::str::FromStr;
-
 
 use crate::ARGS;
 
@@ -40,12 +37,12 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
             Some(f) => {
                 let mime = mime_guess::from_path(f.path())
                     .first()
-                    .ok_or(anyhow!("couldn't guess mimetype for static file"))?
+                    .ok_or_else(|| anyhow!("couldn't guess mimetype for static file"))?
                     .to_string();
                 let mut resp = (
                     StatusCode::OK,
                     f.contents_utf8()
-                        .ok_or(anyhow!("file to be utf-8"))?
+                        .ok_or_else(|| anyhow!("file to be utf-8"))?
                         .to_owned(),
                 )
                     .into_response();
@@ -71,13 +68,15 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                     children,
                     ..
                 } if pg == &uri.path()[1..] => {
-                    let html = ast_to_html_string(children, None)?; // TODO actually use Some(..RenderGroup
-                    let _text_title = format!("{:?}", title);
+                    let html = ast_to_html_string(children, None)?;
+                    let nav_html = ast_to_html_string(children, Some(RenderGroup::Nav))?;
+                    // let _text_title = format!("{:?}", title);
                     let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
                     let template = liquid_parser.parse(&liquid_page)?;
                     let globals = object!({
                         "req_path": format!("{}", uri),
                         "html": html,
+                        "nav_html": nav_html,
                         "title": stringify_bet(title)?
                     });
 

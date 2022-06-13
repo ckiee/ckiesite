@@ -26,8 +26,8 @@ pub enum AstNode {
 pub struct BackrefAstNode {
     /// an index into the PassedSyntaxTree this is in
     pub parent_idx: usize,
-
     pub inner: AstNode,
+    pub render_group: Option<RenderGroup>
 }
 
 pub type PassedSyntaxTree = Vec<BackrefAstNode>;
@@ -91,8 +91,6 @@ impl BlockExprNode {
 pub type BlockExprTree = Vec<BlockExprNode>;
 pub type AbstractSyntaxTree = Vec<AstNode>;
 
-// impls
-
 impl Display for AstNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -126,7 +124,7 @@ impl BackrefAstNode {
         Self {
             parent_idx: 0,
             inner: with,
+            render_group: None
         }
     }
 }
-

@@ -6,8 +6,8 @@ use anyhow::{anyhow, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
 use crate::parse::{
-    AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
-    RenderGroup, PassedSyntaxTree, BackrefAstNode
+    AstNode, BackrefAstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
+    PassedSyntaxTree, RenderGroup,
 };
 
 pub fn ast_to_html_string(
@@ -16,40 +16,52 @@ pub fn ast_to_html_string(
 ) -> Result<String> {
     let mut buf = String::with_capacity(4096);
     for node in nodes {
-        buf.push_str(&ast_node_to_html_string(node, &render_group)?);
+        // XXX: Visiting new nodes and generating output is combined here.
+        // Maybe don't do that if perf gets bad, since we call ast_to_html_string
+        // for n RenderGroups and this runs over the entire AST regardless of necessity.
+        let node_html = ast_node_to_html_string(node, &render_group)?;
+
+        if node.render_group == render_group {
+            buf.push_str(&node_html);
+        }
     }
+
     Ok(buf)
 }
 
-fn ast_node_to_html_string(node: &BackrefAstNode, _rg: &Option<RenderGroup>) -> Result<String> {
+fn ast_node_to_html_string(node: &BackrefAstNode, rg: &Option<RenderGroup>) -> Result<String> {
     Ok(match &node.inner {
         AstNode::Directive(d) => match d {
             Directive::Raw(_, _) => unreachable!(),
             // TODO Meh, maybe return Result<Option<String>>
             _ => "".to_string(),
         },
+
         AstNode::Heading {
-            children: _,
+            children,
             level,
             title,
             routing, // TODO use this to link?
         } => format!(
             // In HTML headings do not have children as in our AST.
-            "<h{level} {id}>{title}</h{level}>",
+            "<h{level} {id}>{title}</h{level}>{children}",
             level = level,
             title = bet_to_html_string(title)?,
-            // XXX: Compile
-            // children = ast_to_html_string(&children, rg.clone())?,
+            children = ast_to_html_string(&children, rg.clone())?,
             id = match routing {
                 Some(_route) => "TODO".to_string(),
                 None => "".to_string(),
             }
         ),
+
         AstNode::Block(BlockType::Block, bet) => {
             format!("<p>{}</p>", bet_to_html_string(bet)?)
         }
+
         AstNode::Block(BlockType::Inline, bet) => bet_to_html_string(bet)?,
+
         AstNode::HorizRule => "<hr>".to_string(),
+
         AstNode::SourceBlock { language, code } => {
             let syntax_set = SyntaxSet::load_defaults_newlines();
             let syntect_lang = match language {
