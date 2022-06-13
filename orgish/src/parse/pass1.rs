@@ -55,11 +55,12 @@ pub fn flat_nodes_to_tree(
                     level: *level,
                     title: title_bet,
                     // XXX: Backreferences in children do not exist yet. Do that in another phase.
-                    children: flat_nodes_to_tree(
+                    // TODO ^
+                    children: vec![Arc::new( BackreferencedAstNode::new_unref(flat_nodes_to_tree(
                         nodes,
                         StopAt::NextHeadingWithLevel(*level),
                         None,
-                    )?,
+                    )?))],
                     routing,
                 })
             }

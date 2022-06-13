@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use std::{iter::Peekable, slice::Iter, sync::Arc, sync::Weak, vec::IntoIter};
 
-compile_error!("TODO maybe remove this pass, give up on Weak, use a index into the vec, ..");
+// compile_error!("TODO maybe remove this pass, give up on Weak, use a index into the vec, ..");
 
 use super::{AstNode, BackreferencedAst, BackreferencedAstNode};
 

@@ -117,3 +117,9 @@ pub fn stringify_bet(bet: &Vec<BlockExprNode>) -> Result<String> {
     }
     Ok(buf)
 }
+
+impl BackreferencedAstNode {
+    pub fn new_unref(with: AstNode) -> Self {
+        BackreferencedAstNode { parent: None, inner: with }
+    }
+}
