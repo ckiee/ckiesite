@@ -1,9 +1,9 @@
-use std::{iter::Peekable, sync::Weak, slice::Iter, sync::Arc};
+use std::{iter::Peekable, slice::Iter};
 
 use anyhow::Result;
 
 use super::{
-    data::AstNode, AbstractSyntaxTree, PassedSyntaxTree, BlockExprNode, BlockExprTree, Directive,
+    data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive,
     BackrefAstNode, Route,
 };
 
@@ -57,7 +57,7 @@ pub fn flat_nodes_to_tree(
                     children: flat_nodes_to_tree(
                         nodes,
                         StopAt::NextHeadingWithLevel(*level),
-                    )?.into_iter().map(|n| BackrefAstNode::new_unref(n)).collect::<Vec<_>>(),
+                    )?.into_iter().map(BackrefAstNode::new_unref).collect::<Vec<_>>(),
                     routing,
                 })
             }

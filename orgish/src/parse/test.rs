@@ -1,13 +1,30 @@
 use anyhow::Result;
 
-use crate::parse::{data::BlockExprNode, parse_n_pass, BlockType, Directive, LinkTarget, Route};
+use anyhow::anyhow;
+use crate::parse::BackrefAstNode;
+use crate::parse::{data::BlockExprNode, BlockType, Directive, LinkTarget, Route};
 
+use super::AbstractSyntaxTree;
 use super::data::AstNode;
+
+pub fn parse_partial_pass(input: &str) -> Result<AbstractSyntaxTree> {
+    use combine::stream::position::Stream;
+    use combine::EasyParser;
+    use super::combiner::org_file;
+
+    match org_file().easy_parse(Stream::new(input)) {
+        Ok((ast, _)) => Ok(super::pass1::flat_nodes_to_tree(
+            &mut ast.iter().peekable(),
+            super::pass1::StopAt::Eof,
+        )?),
+        Err(pain) => Err(anyhow!(pain.to_string())),
+    }
+}
 
 #[test]
 fn parses_directive() -> Result<()> {
     assert_eq!(
-        parse_n_pass("#+TITLE: hello\n")?,
+        parse_partial_pass("#+TITLE: hello\n")?,
         vec![AstNode::Directive(Directive::Title("hello".to_string()))]
     );
     // TODO add more directiev types
@@ -17,7 +34,7 @@ fn parses_directive() -> Result<()> {
 #[test]
 fn parses_text() -> Result<()> {
     assert_eq!(
-        parse_n_pass("hi world\n")?,
+        parse_partial_pass("hi world\n")?,
         vec![AstNode::Block(
             BlockType::Block,
             vec![
@@ -37,7 +54,7 @@ fn parses_text() -> Result<()> {
 
 #[test]
 fn parses_empty() -> Result<()> {
-    assert_eq!(parse_n_pass("")?, vec![],);
+    assert_eq!(parse_partial_pass("")?, vec![],);
     Ok(())
 }
 
@@ -45,7 +62,7 @@ fn parses_empty() -> Result<()> {
 fn parses_whitespaces() -> Result<()> {
     eprintln!("ws nl ws nl");
     assert_eq!(
-        parse_n_pass(" \n \n")?,
+        parse_partial_pass(" \n \n")?,
         vec![
             AstNode::Block(BlockType::Block, vec![BlockExprNode::Char(' ')]),
             AstNode::Block(BlockType::Block, vec![BlockExprNode::Char(' ')])
@@ -53,7 +70,7 @@ fn parses_whitespaces() -> Result<()> {
     );
 
     eprintln!("just newlines");
-    assert_eq!(parse_n_pass("\n\n")?, vec![]);
+    assert_eq!(parse_partial_pass("\n\n")?, vec![]);
     Ok(())
 }
 
@@ -62,7 +79,7 @@ fn parses_comment() -> Result<()> {
     let tests = vec!["\n# test\n", "\n\n# test\n", "# test\n", "# test \n"];
     for test in tests {
         assert!(
-            parse_n_pass(test)?
+            parse_partial_pass(test)?
                 .iter()
                 .all(|n| n == &AstNode::Block(BlockType::Block, vec![BlockExprNode::Linespace])),
             "input: '{}' did not parse to single linespace",
@@ -82,14 +99,14 @@ fn parses_heading() -> Result<()> {
     ];
     for test in tests {
         assert_eq!(
-            parse_n_pass(test.0)?,
+            parse_partial_pass(test.0)?,
             vec![AstNode::Heading {
                 routing: None,
                 level: test.1,
-                children: vec![AstNode::Block(
+                children: vec![BackrefAstNode::new_unref(AstNode::Block(
                     BlockType::Block,
                     vec![BlockExprNode::Char('b'), BlockExprNode::Char('h'),]
-                )],
+                ))],
                 title: vec![BlockExprNode::Char('t'), BlockExprNode::Char('a'),]
             }],
             "\ninput: {} (lvl={})",
@@ -109,25 +126,25 @@ fn parses_heading() -> Result<()> {
 #[test]
 fn parse_escapes_heading_level() -> Result<()> {
     assert_eq!(
-        parse_n_pass("* a\n** b\n** c\n* d\n")?,
+        parse_partial_pass("* a\n** b\n** c\n* d\n")?,
         vec![
             AstNode::Heading {
                 routing: None,
                 level: 1,
                 title: vec![BlockExprNode::Char('a')],
                 children: vec![
-                    AstNode::Heading {
+                    BackrefAstNode::new_unref(AstNode::Heading {
                         routing: None,
                         level: 2,
                         title: vec![BlockExprNode::Char('b')],
                         children: vec![]
-                    },
-                    AstNode::Heading {
+                    }),
+                    BackrefAstNode::new_unref(AstNode::Heading {
                         routing: None,
                         level: 2,
                         title: vec![BlockExprNode::Char('c')],
                         children: vec![]
-                    }
+                    })
                 ]
             },
             AstNode::Heading {
@@ -144,7 +161,7 @@ fn parse_escapes_heading_level() -> Result<()> {
 #[test]
 fn parses_blockexpr_formatting() -> Result<()> {
     assert_eq!(
-        parse_n_pass(
+        parse_partial_pass(
             r#"To markup text in Org, simply surround it with one or more marker characters. *Bold*, /italic/ and _underline_ are fairly intuitive, and the ability to use +strikethrough+ is a plus.  You can _/*combine*/_ the basic markup in any order, however ~code~ and =verbatim= need to be the *_~inner-most~_* markers if they are present since their contents are interpreted =_literally_=.
 "#
         )?,
@@ -499,7 +516,7 @@ fn parses_nbsp() -> Result<()> {
     let sp_char = BlockExprNode::Char(' ');
     let nbsp_char = BlockExprNode::Char('\u{a0}');
     assert_eq!(
-        parse_n_pass("nbsp&h h&nbsp\n")?,
+        parse_partial_pass("nbsp&h h&nbsp\n")?,
         vec![AstNode::Block(
             BlockType::Block,
             vec![
@@ -510,7 +527,7 @@ fn parses_nbsp() -> Result<()> {
         )]
     );
     assert_eq!(
-        parse_n_pass("h h\n")?,
+        parse_partial_pass("h h\n")?,
         vec![AstNode::Block(
             BlockType::Block,
             vec![BlockExprNode::Char('h'), sp_char, BlockExprNode::Char('h')]
@@ -522,7 +539,7 @@ fn parses_nbsp() -> Result<()> {
 #[test]
 fn parses_link() -> Result<()> {
     assert_eq!(
-        parse_n_pass("[[https://example.com/some-path][helo]]\n")?,
+        parse_partial_pass("[[https://example.com/some-path][helo]]\n")?,
         vec![AstNode::Block(
             BlockType::Block,
             vec![BlockExprNode::Link(
@@ -538,7 +555,7 @@ fn parses_link() -> Result<()> {
     );
 
     assert_eq!(
-        parse_n_pass("[[https://example.com/some-path]]\n")?,
+        parse_partial_pass("[[https://example.com/some-path]]\n")?,
         vec![AstNode::Block(
             BlockType::Block,
             vec![BlockExprNode::Link(
@@ -550,7 +567,7 @@ fn parses_link() -> Result<()> {
 
     // rust is not in the mood for proper formatting so this is handmade )^:
     assert_eq!(
-        parse_n_pass("in [[https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix][a lot of places]].\n")?,
+        parse_partial_pass("in [[https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix][a lot of places]].\n")?,
         vec![AstNode::Block(BlockType::Block,
             vec![
                 BlockExprNode::Char('i'),
@@ -587,7 +604,7 @@ fn parses_link() -> Result<()> {
 #[test]
 fn parses_routing() -> Result<()> {
     assert_eq!(
-        parse_n_pass("* :/path: h\n")?,
+        parse_partial_pass("* :/path: h\n")?,
         vec![AstNode::Heading {
             level: 1,
             children: vec![],
@@ -597,7 +614,7 @@ fn parses_routing() -> Result<()> {
         "\nensuring heading with routing parses with whitespaces"
     );
     assert_eq!(
-        parse_n_pass("*:/path:h\n")?,
+        parse_partial_pass("*:/path:h\n")?,
         vec![AstNode::Heading {
             level: 1,
             children: vec![],

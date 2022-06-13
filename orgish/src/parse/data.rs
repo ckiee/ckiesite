@@ -1,9 +1,9 @@
-use std::{fmt::{Display, Write, Pointer}};
 use anyhow::Result;
+use std::fmt::{Display, Pointer, Write};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum AstNode {
     SourceBlock {
         language: String,
@@ -22,12 +22,12 @@ pub enum AstNode {
     HorizRule,
 }
 
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct BackrefAstNode {
     /// an index into the PassedSyntaxTree this is in
     pub parent_idx: usize,
 
-    pub inner: AstNode
+    pub inner: AstNode,
 }
 
 pub type PassedSyntaxTree = Vec<BackrefAstNode>;
@@ -44,7 +44,7 @@ pub enum BlockExprNode {
     Link(LinkTarget, Option<BlockExprTree>),
     /// One or more newlines
     Linespace,
-    HeaderRouting(Route)
+    HeaderRouting(Route),
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -64,19 +64,19 @@ pub enum Directive {
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum LinkTarget {
     Heading { title: String },
-    External(String)
+    External(String),
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum Route {
-    Page(String),       // index
-    Section(String),    // #how
-    RenderGroup(RenderGroup) // @rg
+    Page(String),             // index
+    Section(String),          // #how
+    RenderGroup(RenderGroup), // @rg
 }
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum RenderGroup {
-    Nav // nav
+    Nav, // nav
 }
 
 impl BlockExprNode {
@@ -123,6 +123,10 @@ pub fn stringify_bet(bet: &Vec<BlockExprNode>) -> Result<String> {
 
 impl BackrefAstNode {
     pub fn new_unref(with: AstNode) -> Self {
-        Self { parent_idx: 0, inner: with }
+        Self {
+            parent_idx: 0,
+            inner: with,
+        }
     }
 }
+

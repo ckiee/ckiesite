@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result};
-use std::{iter::Peekable, slice::Iter, sync::Arc, sync::Weak, vec::IntoIter};
+use anyhow::{Result};
+use std::{iter::Peekable, vec::IntoIter};
 
 use super::{AbstractSyntaxTree, AstNode, BackrefAstNode, PassedSyntaxTree};
 
@@ -8,7 +8,7 @@ fn add_backreferences_internal(
     parent_idx: usize,
 ) -> Result<PassedSyntaxTree> {
     let mut out: Vec<BackrefAstNode> = vec![];
-    while let Some(mut node) = nodes.next() {
+    for mut node in nodes.by_ref() {
         node.parent_idx = parent_idx;
         if let AstNode::Heading { children, .. } = &mut node.inner {
             let orig_ch = children.clone();
@@ -24,11 +24,11 @@ fn add_backreferences_internal(
 pub fn add_backreferences(nodes: AbstractSyntaxTree) -> Result<PassedSyntaxTree> {
     let backref_ready_nodes = nodes
         .into_iter()
-        .map(|node| BackrefAstNode::new_unref(node))
+        .map(BackrefAstNode::new_unref)
         .collect::<Vec<_>>();
 
-    Ok(add_backreferences_internal(
+    add_backreferences_internal(
         &mut backref_ready_nodes.into_iter().peekable(),
         0,
-    )?)
+    )
 }

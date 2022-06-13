@@ -71,14 +71,14 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                     children,
                     ..
                 } if pg == &uri.path()[1..] => {
-                    let html = ast_to_html_string(&children, None)?; // TODO actually use Some(..RenderGroup
+                    let html = ast_to_html_string(children, None)?; // TODO actually use Some(..RenderGroup
                     let _text_title = format!("{:?}", title);
                     let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
                     let template = liquid_parser.parse(&liquid_page)?;
                     let globals = object!({
                         "req_path": format!("{}", uri),
                         "html": html,
-                        "title": stringify_bet(&title)?
+                        "title": stringify_bet(title)?
                     });
 
                     return Ok(Html(template.render(&globals)?).into_response());

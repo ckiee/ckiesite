@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use combine::{
-    attempt, between, choice, eof, many1, opaque, optional,
+    attempt, between, choice, many1, opaque, optional,
     parser::char::{alpha_num, newline},
     parser::{
         char::string,
@@ -223,7 +223,7 @@ where
     let subparser = choice!(
         (token('#'), take_until(local_eof())).map(|(_, s)| Route::Section(s)),
         (token('@'), string("nav")).map(|(_, _)| Route::RenderGroup(RenderGroup::Nav)),
-        take_until(local_eof()).map(|s| Route::Page(s))
+        take_until(local_eof()).map(Route::Page)
     );
 
     (token(':'), subparser, token(':'))

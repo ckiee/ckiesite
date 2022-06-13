@@ -6,7 +6,7 @@ use anyhow::{anyhow, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
 use crate::parse::{
-    AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
+    AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
     RenderGroup, PassedSyntaxTree, BackrefAstNode
 };
 
@@ -21,7 +21,7 @@ pub fn ast_to_html_string(
     Ok(buf)
 }
 
-fn ast_node_to_html_string(node: &BackrefAstNode, rg: &Option<RenderGroup>) -> Result<String> {
+fn ast_node_to_html_string(node: &BackrefAstNode, _rg: &Option<RenderGroup>) -> Result<String> {
     Ok(match &node.inner {
         AstNode::Directive(d) => match d {
             Directive::Raw(_, _) => unreachable!(),
@@ -29,7 +29,7 @@ fn ast_node_to_html_string(node: &BackrefAstNode, rg: &Option<RenderGroup>) -> R
             _ => "".to_string(),
         },
         AstNode::Heading {
-            children,
+            children: _,
             level,
             title,
             routing, // TODO use this to link?
@@ -41,7 +41,7 @@ fn ast_node_to_html_string(node: &BackrefAstNode, rg: &Option<RenderGroup>) -> R
             // XXX: Compile
             // children = ast_to_html_string(&children, rg.clone())?,
             id = match routing {
-                Some(route) => "TODO".to_string(),
+                Some(_route) => "TODO".to_string(),
                 None => "".to_string(),
             }
         ),
