@@ -1,40 +1,34 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::{iter::Peekable, slice::Iter, sync::Arc, sync::Weak, vec::IntoIter};
 
-// compile_error!("TODO maybe remove this pass, give up on Weak, use a index into the vec, ..");
-
-use super::{AstNode, BackreferencedAst, BackreferencedAstNode};
+use super::{AbstractSyntaxTree, AstNode, BackrefAstNode, PassedSyntaxTree};
 
 fn add_backreferences_internal(
-    nodes: &mut Peekable<IntoIter<BackreferencedAstNode>>,
-    parent: Option<Weak<BackreferencedAstNode>>,
-) -> Result<Vec<Arc<BackreferencedAstNode>>> {
-    let mut out: Vec<Arc<BackreferencedAstNode>> = vec![];
+    nodes: &mut Peekable<IntoIter<BackrefAstNode>>,
+    parent_idx: usize,
+) -> Result<PassedSyntaxTree> {
+    let mut out: Vec<BackrefAstNode> = vec![];
     while let Some(mut node) = nodes.next() {
-        node.parent = parent.clone();
-        let node_arc = Arc::new(node);
+        node.parent_idx = parent_idx;
         if let AstNode::Heading { children, .. } = &mut node.inner {
             let orig_ch = children.clone();
-            *children = add_backreferences_internal(
-                &mut orig_ch.into_iter().peekable(),
-                Some(Arc::downgrade(&node_arc)),
-            )?;
+            *children =
+                add_backreferences_internal(&mut orig_ch.into_iter().peekable(), parent_idx)?;
         }
-        out.push(node_arc);
+        out.push(node);
     }
 
     Ok(out)
 }
 
-pub fn add_backreferences(
- nopodes: &mut Peekable<IntoIter<BackreferencedAstNode>>,
-) -> Result<Vec<BackreferencedAstNode>> {
-    let res = add_backreferences_internal(nodes, None)?;
-    let out = Vec::new();
+pub fn add_backreferences(nodes: AbstractSyntaxTree) -> Result<PassedSyntaxTree> {
+    let backref_ready_nodes = nodes
+        .into_iter()
+        .map(|node| BackrefAstNode::new_unref(node))
+        .collect::<Vec<_>>();
 
-    for arc in res {
-        out.push(Arc::try_unwrap(arc).map_err(|_| anyhow!("try_unwrap failed"))?);
-    }
-
-    Ok(out)
+    Ok(add_backreferences_internal(
+        &mut backref_ready_nodes.into_iter().peekable(),
+        0,
+    )?)
 }

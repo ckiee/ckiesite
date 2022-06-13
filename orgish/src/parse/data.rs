@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Write, Pointer}, sync::{Weak, Arc}};
+use std::{fmt::{Display, Write, Pointer}};
 use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub enum AstNode {
     Heading {
         level: u16,
         title: BlockExprTree,
-        children: Vec<Arc<BackreferencedAstNode>>,
+        children: Vec<BackrefAstNode>,
         routing: Option<Route>,
     },
     Block(BlockType, BlockExprTree),
@@ -23,10 +23,14 @@ pub enum AstNode {
 }
 
 #[derive(Debug, Clone)]
-pub struct BackreferencedAstNode {
-    pub parent: Option<Weak<BackreferencedAstNode>>, // None means a top-level element
+pub struct BackrefAstNode {
+    /// an index into the PassedSyntaxTree this is in
+    pub parent_idx: usize,
+
     pub inner: AstNode
 }
+
+pub type PassedSyntaxTree = Vec<BackrefAstNode>;
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum BlockExprNode {
@@ -86,7 +90,6 @@ impl BlockExprNode {
 
 pub type BlockExprTree = Vec<BlockExprNode>;
 pub type AbstractSyntaxTree = Vec<AstNode>;
-pub type BackreferencedAst = Vec<BackreferencedAstNode>;
 
 // impls
 
@@ -118,8 +121,8 @@ pub fn stringify_bet(bet: &Vec<BlockExprNode>) -> Result<String> {
     Ok(buf)
 }
 
-impl BackreferencedAstNode {
+impl BackrefAstNode {
     pub fn new_unref(with: AstNode) -> Self {
-        BackreferencedAstNode { parent: None, inner: with }
+        Self { parent_idx: 0, inner: with }
     }
 }

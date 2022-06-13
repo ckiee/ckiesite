@@ -7,11 +7,11 @@ use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing
 
 use crate::parse::{
     AbstractSyntaxTree, AstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
-    RenderGroup, BackreferencedAst, BackreferencedAstNode,
+    RenderGroup, PassedSyntaxTree, BackrefAstNode
 };
 
 pub fn ast_to_html_string(
-    nodes: &BackreferencedAst,
+    nodes: &PassedSyntaxTree,
     render_group: Option<RenderGroup>,
 ) -> Result<String> {
     let mut buf = String::with_capacity(4096);
@@ -21,7 +21,7 @@ pub fn ast_to_html_string(
     Ok(buf)
 }
 
-fn ast_node_to_html_string(node: &BackreferencedAstNode, rg: &Option<RenderGroup>) -> Result<String> {
+fn ast_node_to_html_string(node: &BackrefAstNode, rg: &Option<RenderGroup>) -> Result<String> {
     Ok(match &node.inner {
         AstNode::Directive(d) => match d {
             Directive::Raw(_, _) => unreachable!(),
@@ -35,11 +35,11 @@ fn ast_node_to_html_string(node: &BackreferencedAstNode, rg: &Option<RenderGroup
             routing, // TODO use this to link?
         } => format!(
             // In HTML headings do not have children as in our AST.
-            "<h{level} {id}>{title}</h{level}>{children}",
+            "<h{level} {id}>{title}</h{level}>",
             level = level,
             title = bet_to_html_string(title)?,
-            // TODO: remove unwrap
-            children = ast_to_html_string(&children.upgrade().unwrap(), rg.clone())?,
+            // XXX: Compile
+            // children = ast_to_html_string(&children, rg.clone())?,
             id = match routing {
                 Some(route) => "TODO".to_string(),
                 None => "".to_string(),

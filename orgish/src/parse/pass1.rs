@@ -3,8 +3,8 @@ use std::{iter::Peekable, sync::Weak, slice::Iter, sync::Arc};
 use anyhow::Result;
 
 use super::{
-    data::AstNode, AbstractSyntaxTree, BackreferencedAst, BlockExprNode, BlockExprTree, Directive,
-    BackreferencedAstNode, Route,
+    data::AstNode, AbstractSyntaxTree, PassedSyntaxTree, BlockExprNode, BlockExprTree, Directive,
+    BackrefAstNode, Route,
 };
 
 pub enum StopAt {
@@ -19,8 +19,7 @@ pub enum StopAt {
 pub fn flat_nodes_to_tree(
     nodes: &mut Peekable<Iter<AstNode>>,
     stop_at: StopAt,
-    _parent: Option<Weak<BackreferencedAstNode>>,
-) -> Result<BackreferencedAst> {
+) -> Result<AbstractSyntaxTree> {
     let mut out: AbstractSyntaxTree = vec![];
     while let Some(node) = {
         match stop_at {
@@ -54,13 +53,11 @@ pub fn flat_nodes_to_tree(
                 out.push(AstNode::Heading {
                     level: *level,
                     title: title_bet,
-                    // XXX: Backreferences in children do not exist yet. Do that in another phase.
-                    // TODO ^
-                    children: vec![Arc::new( BackreferencedAstNode::new_unref(flat_nodes_to_tree(
+                    // Backreferences in children do not exist yet. We do that in another phase.
+                    children: flat_nodes_to_tree(
                         nodes,
                         StopAt::NextHeadingWithLevel(*level),
-                        None,
-                    )?))],
+                    )?.into_iter().map(|n| BackrefAstNode::new_unref(n)).collect::<Vec<_>>(),
                     routing,
                 })
             }
@@ -94,13 +91,7 @@ pub fn flat_nodes_to_tree(
         }
     }
 
-    Ok(out
-        .into_iter()
-        .map(|inner| BackreferencedAstNode {
-            inner,
-            parent: None,
-        })
-        .collect::<Vec<_>>())
+    Ok(out)
 }
 
 struct BetPassState {
