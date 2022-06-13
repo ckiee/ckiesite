@@ -21,6 +21,8 @@ fn add_backreferences_internal(
     Ok(out)
 }
 
+// Maybe it's right but the type inference reallly doesn't like it.
+#[allow(clippy::needless_collect)]
 pub fn add_backreferences(nodes: AbstractSyntaxTree) -> Result<PassedSyntaxTree> {
     let backref_ready_nodes = nodes
         .into_iter()
