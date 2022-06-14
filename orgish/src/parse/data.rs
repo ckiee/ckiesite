@@ -86,6 +86,42 @@ pub enum RenderGroup {
     Nav, // nav
 }
 
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum OutputTo {
+    Main,
+    Nav,
+}
+
+
+impl From<Option<RenderGroup>> for OutputTo {
+    fn from(rg: Option<RenderGroup>) -> Self {
+        match rg {
+            None => Self::Main,
+            Some(RenderGroup::Nav) => Self::Nav,
+        }
+    }
+}
+
+impl OutputTo {
+    pub fn from_route(route: Option<Route>) -> Option<Self> {
+        if let Some(Route::RenderGroup(rg)) = route {
+            Some(Self::from(Some(rg)))
+        } else {
+            None
+        }
+    }
+
+    /// Does this thing render into full HTML?
+    pub fn is_using_default_rendering(&self) -> bool {
+        match self {
+            Self::Main => true,
+            _ => false
+        }
+    }
+}
+
+
 impl BlockExprNode {
     /// Returns `true` if the block expr node is [`Char`].
     ///

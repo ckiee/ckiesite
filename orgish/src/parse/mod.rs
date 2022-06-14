@@ -17,7 +17,7 @@ pub fn parse_n_pass(input: &str) -> Result<PassedSyntaxTree> {
     use combiner::org_file;
 
     match org_file().easy_parse(Stream::new(input)) {
-        Ok((ast, _)) => Ok(pass2::add_backreferences(pass1::flat_nodes_to_tree(
+        Ok((ast, _)) => Ok(pass2::pass2(pass1::flat_nodes_to_tree(
             &mut ast.iter().peekable(),
             pass1::StopAt::Eof,
         )?)?),

@@ -2,12 +2,12 @@
 /// This module walks the AST and outputs HTML.
 /// It is all BAD and EVIL since it assumes the input is safe. This is okay for now, but TODO.
 ///
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
 
 use crate::parse::{
     AstNode, BackrefAstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
-    PassedSyntaxTree, RenderGroup, Route,
+    OutputTo, PassedSyntaxTree, RenderGroup, Route,
 };
 
 #[derive(Default, Debug)]
@@ -34,35 +34,11 @@ pub fn ast_to_html_string(nodes: &PassedSyntaxTree, to: OutputTo) -> Result<Pars
 }
 
 // TODO : remove?
-#[derive(Clone, Copy)]
-pub enum OutputTo {
-    Main,
-    Nav,
-}
-
 pub enum NodeToHtmlResult {
     Single(String, OutputTo),
     Many(Vec<String>, OutputTo),
 }
 
-impl From<Option<RenderGroup>> for OutputTo {
-    fn from(rg: Option<RenderGroup>) -> Self {
-        match rg {
-            None => Self::Main,
-            Some(RenderGroup::Nav) => Self::Nav,
-        }
-    }
-}
-
-impl OutputTo {
-    fn from_route(route: Option<Route>) -> Option<Self> {
-        if let Some(Route::RenderGroup(rg)) = route {
-            Some(Self::from(Some(rg)))
-        } else {
-            None
-        }
-    }
-}
 impl ParseBuffers {
     fn output(self, to: &OutputTo) -> String {
         match to {
@@ -73,16 +49,10 @@ impl ParseBuffers {
 }
 
 fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeToHtmlResult> {
-    Ok(match &node.inner {
-        AstNode::Directive(d) => NodeToHtmlResult::Single(
-            match d {
-                Directive::Raw(_, _) => unreachable!(),
-                // TODO Meh, maybe return Result<Option<String>>
-                _ => "".to_string(),
-            },
-            to,
-        ),
+    let defr = to.is_using_default_rendering();
 
+    Ok(match &node.inner {
+        // generic
         AstNode::Heading {
             children,
             level,
@@ -110,21 +80,39 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
             ),
         },
 
-        AstNode::Block((BlockType::Block, bet)) => {
+        //  nav; special navbar rendering
+
+        AstNode::ListItem((BlockType::Inline, bet)) if to == OutputTo::Nav => {
+            NodeToHtmlResult::Single(format!("{}", bet_to_html_string(bet)?), to)
+        }
+
+
+        //  main; normal html rendering
+
+        AstNode::Directive(d) if defr => NodeToHtmlResult::Single(
+            match d {
+                Directive::Raw(_, _) => unreachable!(),
+                // TODO Meh, maybe return Result<Option<String>>
+                _ => "".to_string(),
+            },
+            to,
+        ),
+
+        AstNode::Block((BlockType::Block, bet)) if defr => {
             NodeToHtmlResult::Single(format!("<p>{}</p>", bet_to_html_string(bet)?), to)
         }
 
-        AstNode::Block((BlockType::Inline, bet)) => {
+        AstNode::Block((BlockType::Inline, bet)) if defr => {
             NodeToHtmlResult::Single(bet_to_html_string(bet)?, to)
         }
 
-        AstNode::ListItem((_, bet)) => {
+        AstNode::ListItem((_, bet)) if defr => {
             NodeToHtmlResult::Single(format!("<li>{}</li>", bet_to_html_string(bet)?), to)
         }
 
-        AstNode::HorizRule => NodeToHtmlResult::Single("<hr>".to_string(), to),
+        AstNode::HorizRule if defr => NodeToHtmlResult::Single("<hr>".to_string(), to),
 
-        AstNode::SourceBlock { language, code } => {
+        AstNode::SourceBlock { language, code } if defr => {
             let syntax_set = SyntaxSet::load_defaults_newlines();
             let syntect_lang = match language {
                 x if x == "rust" => "Rust",
@@ -142,6 +130,7 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
                 to,
             )
         }
+        _ => bail!("unimplemented HTML generation for node: {:#?}", node.inner),
     })
 }
 
