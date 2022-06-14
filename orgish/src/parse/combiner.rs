@@ -16,7 +16,8 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup, Route,
+    AbstractSyntaxTree, BetBlock, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup,
+    Route,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -49,7 +50,7 @@ where
     let skipline = newline().map(|_| ());
     skipline
         .or(attempt(comment))
-        .map(|_| AstNode::Block(BlockType::Inline, vec![BlockExprNode::Linespace]))
+        .map(|_| AstNode::Block((BlockType::Inline, vec![BlockExprNode::Linespace])))
         .message("while parsing linespace")
 }
 
@@ -124,7 +125,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    many1(block_expr_node()).map(|v| AstNode::Block(BlockType::Block, v))
+    many1(block_expr_node()).map(|v| AstNode::Block((BlockType::Block, v)))
 }
 
 fn char<Input>() -> impl Parser<Input, Output = BlockExprNode>
@@ -161,7 +162,6 @@ where
     let end_1 = end();
     let end_2 = end();
     (
-
         position(),
         start,
         (position(), take_until::<String, _, _>(end_1)).flat_map(|(pos, s)| {
@@ -339,6 +339,18 @@ where
         .message("while parsing heading")
 }
 
+fn list<Input>() -> impl Parser<Input, Output = AstNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display,
+{
+    // Upstream org also supports * and + but I don't need those.
+    (token('-'), whitespace(), many1(block_expr_node()))
+        // Trying out new terminology, BEV = Block Expr Vector
+        .map(|(_, _, bev)| AstNode::ListItem((BlockType::Inline, bev)))
+}
+
 pub fn ast_node<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
@@ -353,6 +365,7 @@ where
         // but it's worth the exact runtime perf for the code encapsulation for now.
         // (BEN link needs to be parsed before ASN horiz_rule)
         attempt(horiz_rule()),
+        attempt(list()),
         ast_block_expr_node()
     )
 }

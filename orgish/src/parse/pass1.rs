@@ -63,15 +63,15 @@ pub fn flat_nodes_to_tree(
             }
 
             // Optimization: Linespace is not very useful in the final AST
-            AstNode::Block(_, bet) if bet == &vec![BlockExprNode::Linespace] => {}
+            AstNode::Block((_, bet)) if bet == &vec![BlockExprNode::Linespace] => {}
 
-            AstNode::Block(ty, bet) => out.push(AstNode::Block(
+            AstNode::Block((ty, bet)) => out.push(AstNode::Block((
                 ty.clone(),
                 bet_pass(
                     &mut bet.iter().peekable(),
                     &mut BetPassState::new_with_ast_node(node.clone()),
                 )?,
-            )),
+            ))),
 
             AstNode::Directive(dir) => match dir {
                 Directive::Raw(k, v) => {

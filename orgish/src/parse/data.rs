@@ -17,10 +17,12 @@ pub enum AstNode {
         children: Vec<BackrefAstNode>,
         routing: Option<Route>,
     },
-    Block(BlockType, BlockExprTree),
+    Block(BetBlock),
     /// Equivalent to html <hr>
     HorizRule,
+    ListItem(BetBlock)
 }
+
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct BackrefAstNode {
@@ -31,6 +33,18 @@ pub struct BackrefAstNode {
 }
 
 pub type PassedSyntaxTree = Vec<BackrefAstNode>;
+
+// This is cursed. The AstNode::{Block,ListItem} implies
+// the inline-ness instead of BetBlock and BlockType, and yet,
+// this is still here. TODO Remove.
+pub type BetBlock = (BlockType, BlockExprTree);
+
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub enum BlockType {
+    Block,
+    Inline,
+}
+
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum BlockExprNode {
@@ -46,13 +60,6 @@ pub enum BlockExprNode {
     Linespace,
     HeaderRouting(Route),
 }
-
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
-pub enum BlockType {
-    Block,
-    Inline,
-}
-
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum Directive {
     Id(String),
@@ -93,9 +100,8 @@ pub type AbstractSyntaxTree = Vec<AstNode>;
 
 impl Display for AstNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AstNode::Block(_, bet) => bet.fmt(f)?,
-            _ => {}
+        if let AstNode::Block((_, bet)) = self {
+            bet.fmt(f)?
         }
         Ok(())
     }

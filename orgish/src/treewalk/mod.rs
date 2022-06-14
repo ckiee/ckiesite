@@ -54,11 +54,15 @@ fn ast_node_to_html_string(node: &BackrefAstNode, rg: &Option<RenderGroup>) -> R
             }
         ),
 
-        AstNode::Block(BlockType::Block, bet) => {
+        AstNode::Block((BlockType::Block, bet)) => {
             format!("<p>{}</p>", bet_to_html_string(bet)?)
         }
 
-        AstNode::Block(BlockType::Inline, bet) => bet_to_html_string(bet)?,
+        AstNode::Block((BlockType::Inline, bet)) => bet_to_html_string(bet)?,
+
+        AstNode::ListItem((_, bet)) => {
+            format!("<li>{}</li>", bet_to_html_string(bet)?)
+        },
 
         AstNode::HorizRule => "<hr>".to_string(),
 
