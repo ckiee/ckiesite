@@ -81,7 +81,7 @@ pub enum Route {
     RenderGroup(RenderGroup), // @rg
 }
 
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum RenderGroup {
     Nav, // nav
 }

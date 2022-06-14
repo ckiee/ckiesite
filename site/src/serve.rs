@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use liquid::{object, ParserBuilder};
 use orgish::{
     parse::{parse_n_pass, stringify_bet, AstNode, Route, RenderGroup},
-    treewalk::ast_to_html_string,
+    treewalk::{ast_to_html_string, OutputTo},
 };
 use std::str::FromStr;
 
@@ -68,15 +68,13 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                     children,
                     ..
                 } if pg == &uri.path()[1..] => {
-                    let html = ast_to_html_string(children, None)?;
-                    let nav_html = ast_to_html_string(children, Some(RenderGroup::Nav))?;
-                    // let _text_title = format!("{:?}", title);
+                    let html_buffers = ast_to_html_string(children, OutputTo::Main)?;
                     let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
                     let template = liquid_parser.parse(&liquid_page)?;
                     let globals = object!({
                         "req_path": format!("{}", uri),
-                        "html": html,
-                        "nav_html": nav_html,
+                        "html": html_buffers.main,
+                        "nav_html": html_buffers.nav,
                         "title": stringify_bet(title)?
                     });
 
