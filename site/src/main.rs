@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 pub async fn handle_anyhow_error(err: anyhow::Error) -> (StatusCode, String) {
-    error!("error while serving request: {:#?}", err);
+    error!("error while serving request: {}", err);
     (
         StatusCode::INTERNAL_SERVER_ERROR,
         "500 oopsie doopsie".to_string(),

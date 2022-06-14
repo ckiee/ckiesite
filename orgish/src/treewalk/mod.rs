@@ -7,7 +7,7 @@ use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing
 
 use crate::parse::{
     AstNode, BackrefAstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
-    PassedSyntaxTree, RenderGroup,
+    PassedSyntaxTree, RenderGroup, Route,
 };
 
 #[derive(Default, Debug)]
@@ -15,30 +15,36 @@ pub struct ParseBuffers {
     pub main: String,
     pub nav: Vec<String>,
 }
+
 pub fn ast_to_html_string(nodes: &PassedSyntaxTree, to: OutputTo) -> Result<ParseBuffers> {
     let mut buffers = ParseBuffers::default();
     for node in nodes {
-        // XXX: Visiting new nodes and generating output is combined here.
-        // Maybe don't do that if perf gets bad, since we call ast_to_html_string
-        // for n RenderGroups and this runs over the entire AST regardless of necessity.
-        let (html, to) = ast_node_to_html_string(node, to)?;
+        let (mut htmls, res_to) = match ast_node_to_html_string(node, to)? {
+            NodeToHtmlResult::Single(html, res_to) => (vec![html], res_to),
+            NodeToHtmlResult::Many(htmls, res_to) => (htmls, res_to),
+        };
 
-        match to {
-            OutputTo::Main => buffers.main.push_str(&html),
-            OutputTo::Nav => buffers.nav.push(html)
+        match res_to {
+            OutputTo::Main => buffers.main.push_str(&htmls.join("")),
+            OutputTo::Nav => buffers.nav.append(&mut htmls),
         };
     }
-
-    dbg!(&buffers);
 
     Ok(buffers)
 }
 
+// TODO : remove?
 #[derive(Clone, Copy)]
 pub enum OutputTo {
     Main,
     Nav,
 }
+
+pub enum NodeToHtmlResult {
+    Single(String, OutputTo),
+    Many(Vec<String>, OutputTo),
+}
+
 impl From<Option<RenderGroup>> for OutputTo {
     fn from(rg: Option<RenderGroup>) -> Self {
         match rg {
@@ -48,76 +54,95 @@ impl From<Option<RenderGroup>> for OutputTo {
     }
 }
 
+impl OutputTo {
+    fn from_route(route: Option<Route>) -> Option<Self> {
+        if let Some(Route::RenderGroup(rg)) = route {
+            Some(Self::from(Some(rg)))
+        } else {
+            None
+        }
+    }
+}
 impl ParseBuffers {
     fn output(self, to: &OutputTo) -> String {
         match to {
             OutputTo::Main => self.main,
-            OutputTo::Nav => self.nav.join("")
+            OutputTo::Nav => self.nav.join(""),
         }
     }
 }
 
-
-fn ast_node_to_html_string(
-    node: &BackrefAstNode,
-    to: OutputTo,
-) -> Result<(String, OutputTo)> {
-    Ok((
-        match &node.inner {
-            AstNode::Directive(d) => match d {
+fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeToHtmlResult> {
+    Ok(match &node.inner {
+        AstNode::Directive(d) => NodeToHtmlResult::Single(
+            match d {
                 Directive::Raw(_, _) => unreachable!(),
                 // TODO Meh, maybe return Result<Option<String>>
                 _ => "".to_string(),
             },
+            to,
+        ),
 
-            AstNode::Heading {
-                children,
-                level,
-                title,
-                routing, // TODO use this to link?
-            } => format!(
-                // In HTML headings do not have children as in our AST.
-                "<h{level} {id}>{title}</h{level}>{children}",
-                level = level,
-                title = bet_to_html_string(title)?,
-                children =
-                    ast_to_html_string(children, OutputTo::from(node.render_group))?.output(&to),
-                id = match routing {
-                    Some(_route) => "TODO".to_string(),
-                    None => "".to_string(),
-                }
+        AstNode::Heading {
+            children,
+            level,
+            title,
+            routing, // TODO use this to link?
+        } => match OutputTo::from_route(routing.clone()) {
+            Some(OutputTo::Main) | None => NodeToHtmlResult::Single(
+                format!(
+                    // In HTML headings do not have children as in our AST.
+                    "<h{level} {id}>{title}</h{level}>{children}",
+                    level = level,
+                    title = bet_to_html_string(title)?,
+                    children =
+                        ast_to_html_string(children, OutputTo::Main)?.output(&OutputTo::Main),
+                    id = match routing {
+                        Some(_route) => "TODO".to_string(),
+                        None => "".to_string(),
+                    }
+                ),
+                OutputTo::Main,
             ),
-
-            AstNode::Block((BlockType::Block, bet)) => {
-                format!("<p>{}</p>", bet_to_html_string(bet)?)
-            }
-
-            AstNode::Block((BlockType::Inline, bet)) => bet_to_html_string(bet)?,
-
-            AstNode::ListItem((_, bet)) => {
-                format!("<li>{}</li>", bet_to_html_string(bet)?)
-            }
-
-            AstNode::HorizRule => "<hr>".to_string(),
-
-            AstNode::SourceBlock { language, code } => {
-                let syntax_set = SyntaxSet::load_defaults_newlines();
-                let syntect_lang = match language {
-                    x if x == "rust" => "Rust",
-                    _ => language,
-                };
-                let syntax = syntax_set
-                    .find_syntax_by_name(syntect_lang)
-                    .expect("didn't find src language syntax"); // TODO don't unwrap
-
-                let theme_set = ThemeSet::load_defaults();
-                let theme = theme_set.themes.get("base16-ocean.light").unwrap();
-
-                highlighted_html_for_string(code, &syntax_set, syntax, theme)
-            }
+            Some(OutputTo::Nav) => NodeToHtmlResult::Many(
+                ast_to_html_string(children, OutputTo::Nav)?.nav,
+                OutputTo::Nav,
+            ),
         },
-        to,
-    ))
+
+        AstNode::Block((BlockType::Block, bet)) => {
+            NodeToHtmlResult::Single(format!("<p>{}</p>", bet_to_html_string(bet)?), to)
+        }
+
+        AstNode::Block((BlockType::Inline, bet)) => {
+            NodeToHtmlResult::Single(bet_to_html_string(bet)?, to)
+        }
+
+        AstNode::ListItem((_, bet)) => {
+            NodeToHtmlResult::Single(format!("<li>{}</li>", bet_to_html_string(bet)?), to)
+        }
+
+        AstNode::HorizRule => NodeToHtmlResult::Single("<hr>".to_string(), to),
+
+        AstNode::SourceBlock { language, code } => {
+            let syntax_set = SyntaxSet::load_defaults_newlines();
+            let syntect_lang = match language {
+                x if x == "rust" => "Rust",
+                _ => language,
+            };
+            let syntax = syntax_set
+                .find_syntax_by_name(syntect_lang)
+                .expect("didn't find src language syntax"); // TODO don't unwrap
+
+            let theme_set = ThemeSet::load_defaults();
+            let theme = theme_set.themes.get("base16-ocean.light").unwrap();
+
+            NodeToHtmlResult::Single(
+                highlighted_html_for_string(code, &syntax_set, syntax, theme),
+                to,
+            )
+        }
+    })
 }
 
 // block expr tree

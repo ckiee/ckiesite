@@ -5,7 +5,7 @@ use std::{
     io::{self, Read},
 };
 
-use orgish::{parse::parse_n_pass, treewalk::ast_to_html_string};
+use orgish::{parse::parse_n_pass, treewalk::{ast_to_html_string, OutputTo::{self}}};
 
 fn main() -> Result<()> {
     let mut args = env::args().into_iter().peekable();
@@ -38,9 +38,9 @@ fn main() -> Result<()> {
         eprintln!("{:#?}", ast);
     }
 
-    let html = ast_to_html_string(&ast, None, 0)?;
+    let bufs = ast_to_html_string(&ast, OutputTo::Main)?;
 
-    println!("{}", html);
+    println!("{:#?}", bufs);
 
     Ok(())
 }

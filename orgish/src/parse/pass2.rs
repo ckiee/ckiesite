@@ -11,7 +11,7 @@ fn add_backreferences_internal(
     let mut out: Vec<BackrefAstNode> = vec![];
     for mut node in nodes.by_ref() {
         node.parent_idx = parent_idx;
-        node.render_group = render_group.clone();
+        node.render_group = render_group;
         if let AstNode::Heading {
             children,
             ref routing,
@@ -24,12 +24,12 @@ fn add_backreferences_internal(
             // Otherwise, just use the render_group we were called with
             // as above.
             let new_rg = if let Some(Route::RenderGroup(rg)) = routing {
-                Some(rg.clone())
+                Some(*rg)
             } else {
                 node.render_group
             };
 
-            node.render_group = new_rg.clone();
+            node.render_group = new_rg;
 
             *children = add_backreferences_internal(
                 &mut orig_ch.into_iter().peekable(),

@@ -20,9 +20,14 @@ Sometimes I make things. This website is being served to you with a few thousand
 Yes. Things. Mostly Rust, TypeScript and Nix. [[https://github.com/ckiee/ckiesite-rs][Here's this site.]]
 
 * How this site's language works :meta:
-The site is using /Orgish/, a custom variant of [[https://orgmode.org/][nbsp&Org Mode&nbsp]]. It includes various new things suited for this site:
+This site is using /Orgish/, a custom variant of [[https://orgmode.org/][nbsp&Org Mode&nbsp]]. It includes various new things suited for this site:
 ** =nbsp&=
 You can disable line wrapping for a bit by wrapping your content in ~nbsp&~ nbsp& *hello world this won't be line wrapped! so cool! some more words! blah blah blah blah* &nbsp ~&nbsp~
+
+* n :nav-rendergroup-test:
+h
+** :@nav:
+b
 
 * render test :render-test:
 toplevel
