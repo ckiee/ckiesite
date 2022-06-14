@@ -109,9 +109,8 @@ impl Display for AstNode {
 
 impl Display for BlockExprNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            &BlockExprNode::Char(c) => f.write_char(c)?,
-            _ => {}
+        if let &BlockExprNode::Char(c) = self {
+            f.write_char(c)?
         }
         Ok(())
     }

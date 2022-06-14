@@ -16,7 +16,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BetBlock, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup,
+    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup,
     Route,
 };
 
