@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use liquid::{object, ParserBuilder};
 use orgish::{
     parse::{parse_n_pass, stringify_bet, AstNode, Route, OutputTo},
-    treewalk::{ast_to_html_string},
+    treewalk::{ast_to_html_string, bet_to_html_string},
 };
 use std::str::FromStr;
 
@@ -75,7 +75,8 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                         "req_path": format!("{}", uri),
                         "html": html_buffers.main,
                         "nav_htmls": html_buffers.nav,
-                        "title": stringify_bet(title)?
+                        "title": stringify_bet(&title)?,
+                        "html_title": bet_to_html_string(&title)?
                     });
 
                     return Ok(Html(template.render(&globals)?).into_response());

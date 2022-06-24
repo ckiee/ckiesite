@@ -45,10 +45,20 @@ pub fn flat_nodes_to_tree(
                     _ => None,
                 });
 
-                let title_bet = bet_pass(
+                let mut title_bet = bet_pass(
                     &mut title.iter().peekable(),
                     &mut BetPassState::new_with_ast_node(node.clone()),
                 )?;
+
+                // XXX: Since we do not parse that nicely, we have
+                // to do this little hack..
+                //
+                // For example,
+                //  ** Blah blah :world:
+                // where BET is "Blah blah " instead of "Blah blah"
+                if let Some(BlockExprNode::Char(' ')) = title_bet.last() {
+                    title_bet.pop();
+                }
 
                 out.push(AstNode::Heading {
                     level: *level,

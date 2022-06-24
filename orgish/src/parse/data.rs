@@ -21,16 +21,15 @@ pub enum AstNode {
     /// Equivalent to html <hr>
     HorizRule,
     ListItem(BetBlock),
-    WarningBlock(BetBlock)
+    WarningBlock(BetBlock),
 }
-
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct BackrefAstNode {
     /// an index into the PassedSyntaxTree this is in
     pub parent_idx: usize,
     pub inner: AstNode,
-    pub render_group: Option<RenderGroup>
+    pub render_group: Option<RenderGroup>,
 }
 
 pub type PassedSyntaxTree = Vec<BackrefAstNode>;
@@ -45,7 +44,6 @@ pub enum BlockType {
     Block,
     Inline,
 }
-
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum BlockExprNode {
@@ -88,13 +86,11 @@ pub enum RenderGroup {
     Nav, // nav
 }
 
-
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum OutputTo {
     Main,
     Nav,
 }
-
 
 impl From<Option<RenderGroup>> for OutputTo {
     fn from(rg: Option<RenderGroup>) -> Self {
@@ -118,11 +114,10 @@ impl OutputTo {
     pub fn is_using_default_rendering(&self) -> bool {
         match self {
             Self::Main => true,
-            _ => false
+            _ => false,
         }
     }
 }
-
 
 impl BlockExprNode {
     /// Returns `true` if the block expr node is [`Char`].
@@ -147,8 +142,14 @@ impl Display for AstNode {
 
 impl Display for BlockExprNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let &BlockExprNode::Char(c) = self {
-            f.write_char(c)?
+        match self {
+            &BlockExprNode::Char(c) => f.write_char(c)?,
+            &BlockExprNode::Italic(ref bet) => {
+                for ben in bet {
+                    ben.fmt(f)?
+                }
+            }
+            _ => (),
         }
         Ok(())
     }
@@ -167,7 +168,7 @@ impl BackrefAstNode {
         Self {
             parent_idx: 0,
             inner: with,
-            render_group: None
+            render_group: None,
         }
     }
 }

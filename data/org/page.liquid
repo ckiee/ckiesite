@@ -9,9 +9,9 @@
         max-width: 650px;
         line-height: 1.6;
         font-size: 18px;
+        color: #444;
     }
     html {
-        color: #444;
         background: #EEEEEE;
     }
     body {
@@ -66,6 +66,8 @@
     </a>
 
     <nav id="header-left-links">
+      <b>{{ html_title }}</b>
+      <span class=separator>&#8594;</span>
       {{nav_htmls | join: "<span class=separator>|</span>"}}
     </nav>
 

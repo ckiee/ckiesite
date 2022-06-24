@@ -139,7 +139,7 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
 }
 
 // block expr tree
-fn bet_to_html_string(nodes: &BlockExprTree) -> Result<String> {
+pub fn bet_to_html_string(nodes: &BlockExprTree) -> Result<String> {
     let mut buf = String::with_capacity(4096);
     for node in nodes {
         buf.push_str(&block_expr_to_html_string(node)?);
