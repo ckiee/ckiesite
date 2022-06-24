@@ -13,7 +13,7 @@ I have no idea, it's changed a bit over the years but I don't remember why I pic
 *** talk to me! :#talk:
 i am online way too much. maybe send an email? =us@ckie.dev=
 ** this site :#site:
-this site has no index listing. as you explore, the content will change with you.
+this site has no index listing. as you explore, +the content will change with you.+ not yet
 ** what do you do :#ckdo:
 Sometimes I make things. This website is being served to you with a few thousand lines of Rust since I wrote a good-enough-for-me parser for [[https://orgmode.org/][nbsp&Org Mode&nbsp]].
 *** /things???/
