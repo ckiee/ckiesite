@@ -186,16 +186,17 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    macro_rules! stupid_marker {
-        () => {
-            token('=').or(token('~'))
+    macro_rules! inner {
+        ($l:literal) => {
+            (
+                token($l),
+                take_until::<String, _, _>(token($l)),
+                token($l)
+            )
         };
     }
-    (
-        stupid_marker!(),
-        take_until::<String, _, _>(stupid_marker!()),
-        stupid_marker!(),
-    )
+
+    inner!('=').or(inner!('~'))
         .map(|(_, c, _)| BlockExprNode::Code(c))
         .message("while parsing inline_code")
 }
