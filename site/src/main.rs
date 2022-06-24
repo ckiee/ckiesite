@@ -7,7 +7,7 @@ use std::{
     path::{PathBuf},
 };
 use tower::{service_fn};
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 pub mod serve;
 
@@ -48,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
         },
         ARGS.port,
     ));
-    debug!("listening on {}", addr);
+    info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await

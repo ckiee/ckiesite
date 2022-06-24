@@ -5,7 +5,7 @@ use std::{
     io::{self, Read},
 };
 
-use orgish::{parse::parse_n_pass, treewalk::{ast_to_html_string, OutputTo::{self}}};
+use orgish::{parse::{parse_n_pass, OutputTo}, treewalk::ast_to_html_string};
 
 fn main() -> Result<()> {
     let mut args = env::args().into_iter().peekable();
