@@ -4,8 +4,6 @@ this is my /new new new new/ website. it is different from the other ones since 
 ** :@nav:
 # TODO add links to other pages here, no conditional yet
 - [[meta][Orgish]]
-- [[nav-rendergroup-test][nav rendergroup test]]
-- [[render-test][general rendering test]]
 ** who are you :#this:
 I is cookie. I am in [[https://github.com/ckiee/nixfiles/blob/master/modules/services/mailserver/util.nix][a lot of places]].
 - [[https://github.com/ckiee][=@ckiee= on Github]]
@@ -21,8 +19,10 @@ Sometimes I make things. This website is being served to you with a few thousand
 *** /things???/
 Yes. Things. Mostly Rust, TypeScript and Nix. [[https://github.com/ckiee/ckiesite-rs][Here's this site.]]
 
-* How this site's language works :meta:
+* /Orgish/, or How This Site's Language Works :meta:
 This site is using /Orgish/, a custom variant of [[https://orgmode.org/][nbsp&Org Mode&nbsp]]. It includes various new things suited for this site:
+** :@nav:
+- [[render-test][general rendering test]]
 ** =nbsp&=
 You can disable line wrapping for a bit by wrapping your content in ~nbsp&~ nbsp& *hello world this won't be line wrapped! so cool! some more words! blah blah blah blah* &nbsp ~&nbsp~
 
