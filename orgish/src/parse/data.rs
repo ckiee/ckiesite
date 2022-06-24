@@ -20,7 +20,8 @@ pub enum AstNode {
     Block(BetBlock),
     /// Equivalent to html <hr>
     HorizRule,
-    ListItem(BetBlock)
+    ListItem(BetBlock),
+    WarningBlock(BetBlock)
 }
 
 
@@ -54,6 +55,7 @@ pub enum BlockExprNode {
     Underline(BlockExprTree),
     Strikethrough(BlockExprTree),
     NonbreakingSpace(BlockExprTree),
+    Warning(BlockExprTree),
     Code(String),
     Link(LinkTarget, Option<BlockExprTree>),
     /// One or more newlines

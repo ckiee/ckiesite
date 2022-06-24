@@ -81,14 +81,11 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
         },
 
         //  nav; special navbar rendering
-
         AstNode::ListItem((BlockType::Inline, bet)) if to == OutputTo::Nav => {
             NodeToHtmlResult::Single(format!("{}", bet_to_html_string(bet)?), to)
         }
 
-
         //  main; normal html rendering
-
         AstNode::Directive(d) if defr => NodeToHtmlResult::Single(
             match d {
                 Directive::Raw(_, _) => unreachable!(),
@@ -110,6 +107,10 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
             NodeToHtmlResult::Single(format!("<li>{}</li>", bet_to_html_string(bet)?), to)
         }
 
+        AstNode::WarningBlock((_, bet)) if defr => {
+            NodeToHtmlResult::Single(bet_to_html_string(bet)?, to)
+        }
+
         AstNode::HorizRule if defr => NodeToHtmlResult::Single("<hr>".to_string(), to),
 
         AstNode::SourceBlock { language, code } if defr => {
@@ -118,9 +119,12 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
                 x if x == "rust" => "Rust",
                 _ => language,
             };
+
             let syntax = syntax_set
                 .find_syntax_by_name(syntect_lang)
-                .expect("didn't find src language syntax"); // TODO don't unwrap
+                .or_else(|| syntax_set.find_syntax_by_extension(syntect_lang))
+                // Nothing else worked, so we fall back to plain text..
+                .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
 
             let theme_set = ThemeSet::load_defaults();
             let theme = theme_set.themes.get("base16-ocean.light").unwrap();
@@ -171,5 +175,9 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
             }
         )),
         BlockExprNode::HeaderRouting(_hr) => unreachable,
+        BlockExprNode::Warning(bet) => Ok(format!(
+            r#"<div class="warning">{}</div>"#,
+            bet_to_html_string(bet)?
+        )),
     }
 }

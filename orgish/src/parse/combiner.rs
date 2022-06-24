@@ -16,8 +16,7 @@ use combine::{
 
 use super::{
     data::{AstNode, BlockExprNode},
-    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup,
-    Route,
+    AbstractSyntaxTree, BlockExprTree, BlockType, Directive, LinkTarget, RenderGroup, Route,
 };
 
 fn whitespace<Input>() -> impl Parser<Input, Output = char>
@@ -76,14 +75,17 @@ where
     <Input as StreamOnce>::Position: Display,
 {
     (
-        string("#+BEGIN_SRC"), // #+BEGIN_SRC
-        whitespaces(),         //
-        many1(alpha_num()),    // rust
+        string("#+BEGIN_SRC"),        // #+BEGIN_SRC
+        whitespaces(),                //" "
+        optional(many1(alpha_num())), // rust
         newline(),
         take_until(string("#+END_SRC")), // fn main() {}
         string("#+END_SRC"),             // #+END_SRC
     )
-        .map(|(_, _, language, _, code, _)| AstNode::SourceBlock { language, code })
+        .map(|(_, _, language, _, code, _)| AstNode::SourceBlock {
+            language: language.unwrap_or_else(|| "Plain Text".to_string()),
+            code,
+        })
         .message("while parsing source block")
 }
 
@@ -109,6 +111,7 @@ where
             attempt(link()),
             inline_code(),
             attempt(nbsp()),
+            attempt(warning()),
             bold(),
             italic(),
             underline(),
@@ -188,15 +191,12 @@ where
 {
     macro_rules! inner {
         ($l:literal) => {
-            (
-                token($l),
-                take_until::<String, _, _>(token($l)),
-                token($l)
-            )
+            (token($l), take_until::<String, _, _>(token($l)), token($l))
         };
     }
 
-    inner!('=').or(inner!('~'))
+    inner!('=')
+        .or(inner!('~'))
         .map(|(_, c, _)| BlockExprNode::Code(c))
         .message("while parsing inline_code")
 }
@@ -287,6 +287,19 @@ where
         .message("while parsing nbsp")
 }
 
+
+fn warning<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display,
+{
+    marker_chars(string("warning&"), Box::new(|| string("&warning")))
+        .map(BlockExprNode::Warning)
+        .message("while parsing warning")
+}
+
+
 fn link<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where
     Input: Stream<Token = char>,
@@ -361,7 +374,7 @@ where
     choice!(
         attempt(heading()),
         attempt(source_block()),
-        directive(),
+        attempt(directive()),
         // HACK this attempt() isn't really ideal,
         // but it's worth the exact runtime perf for the code encapsulation for now.
         // (BEN link needs to be parsed before ASN horiz_rule)
