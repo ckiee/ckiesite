@@ -350,3 +350,8 @@ having too much free time, i sat down and whipped up a little script to occasion
 # 1 packets transmitted, 1 received, 0% packet loss, time 0ms
 # rtt min/avg/max/mdev = 0.035/0.035/0.035/0.000 ms
 # #+END_SRC
+
+* Human Diagnostics :hdiag:
+For things I have said many times and would not like to repeat as much.
+** Not A Personal Attack :#napa:
+The statement you apologized for was not intended as a personal attack, but a hopefully-constructive critique of your actions, please take it as such.
