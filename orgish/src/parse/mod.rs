@@ -2,8 +2,13 @@ use std::error::Error;
 
 use anyhow::{anyhow, Result};
 use combine::ParseError;
-use syntect::{easy::HighlightLines, highlighting::ThemeSet, parsing::{SyntaxSet, SyntaxSetBuilder, SyntaxDefinition}, util::as_24_bit_terminal_escaped};
-use owo_colors::{OwoColorize, Color};
+use owo_colors::{Color, OwoColorize};
+use syntect::{
+    easy::HighlightLines,
+    highlighting::ThemeSet,
+    parsing::{SyntaxDefinition, SyntaxSet, SyntaxSetBuilder},
+    util::as_24_bit_terminal_escaped,
+};
 
 mod combiner;
 mod data;
@@ -24,13 +29,14 @@ pub fn parse_n_pass(input: &str) -> Result<PassedSyntaxTree> {
     match org_file().easy_parse(Stream::new(input)) {
         Ok((ast, _)) => Ok(pass2::pass2(pass1::flat_nodes_to_tree(
             &mut ast.iter().peekable(),
-            pass1::StopAt::Eof,
+            vec![],
         )?)?),
         Err(pain) => {
             let pos = pain.position;
             let line_range: usize = 3;
 
-            let org_syntax = SyntaxDefinition::load_from_str(include_str!("../org.sublime-syntax"), true, None)?;
+            let org_syntax =
+                SyntaxDefinition::load_from_str(include_str!("../org.sublime-syntax"), true, None)?;
             let ps = {
                 let mut b = SyntaxSetBuilder::new();
                 b.add(org_syntax);
@@ -55,7 +61,11 @@ pub fn parse_n_pass(input: &str) -> Result<PassedSyntaxTree> {
 
                     if idx == line_range / 2 {
                         let spaces = " ".repeat(pos.column as usize);
-                        let arrows = format!("{s}{m}{s}", s="^".black().on_bright_black(), m="^".black().on_red());
+                        let arrows = format!(
+                            "{s}{m}{s}",
+                            s = "^".black().on_bright_black(),
+                            m = "^".black().on_red()
+                        );
                         format!("{term_line}    {spaces}{arrows}\n")
                     } else {
                         term_line

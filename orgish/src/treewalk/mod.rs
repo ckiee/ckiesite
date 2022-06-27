@@ -81,9 +81,13 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
         },
 
         //  nav; special navbar rendering
-        AstNode::ListItem((BlockType::Inline, bet)) if to == OutputTo::Nav => {
-            NodeToHtmlResult::Single(format!("{}", bet_to_html_string(bet)?), to)
-        }
+        AstNode::ListItem(_, ast) if to == OutputTo::Nav => NodeToHtmlResult::Single(
+            format!(
+                "{}",
+                ast_to_html_string(ast, OutputTo::Main)?.output(&OutputTo::Main)
+            ),
+            to,
+        ),
 
         //  main; normal html rendering
         AstNode::Directive(d) if defr => NodeToHtmlResult::Single(
@@ -103,9 +107,13 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
             NodeToHtmlResult::Single(bet_to_html_string(bet)?, to)
         }
 
-        AstNode::ListItem((_, bet)) if defr => {
-            NodeToHtmlResult::Single(format!("<li>{}</li>", bet_to_html_string(bet)?), to)
-        }
+        AstNode::ListItem(_, ast) if defr => NodeToHtmlResult::Single(
+            format!(
+                "<ul><li>{}</li></ul>",
+                ast_to_html_string(ast, OutputTo::Main)?.output(&OutputTo::Main)
+            ),
+            to,
+        ),
 
         AstNode::WarningBlock((_, bet)) if defr => {
             NodeToHtmlResult::Single(bet_to_html_string(bet)?, to)

@@ -353,16 +353,16 @@ where
         .message("while parsing heading")
 }
 
-fn list<Input>() -> impl Parser<Input, Output = AstNode>
+fn list_item<Input>() -> impl Parser<Input, Output = AstNode>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    // Upstream org also supports * and + but I don't need those.
-    (token('-'), whitespace(), many1(block_expr_node()))
-        // Trying out new terminology, BEV = Block Expr Vector
-        .map(|(_, _, bev)| AstNode::ListItem((BlockType::Inline, bev)))
+    // Upstream org also supports * but I don't need that.
+    // Like `heading`, the children are added in the next pass.
+    (whitespaces(), choice!(token('-'), token('+')), whitespace())
+        .map(|(ws, _, ast)| AstNode::ListItem(ws.len() as u16, Vec::new()))
 }
 
 pub fn ast_node<Input>() -> impl Parser<Input, Output = AstNode>
@@ -371,16 +371,16 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
+    macro_rules! stmt { ($e:expr) => { (attempt($e), linespace()).map(|(a, _)| a) }; }
+    macro_rules! expr { ($e:expr) => { attempt($e) }; }
+
     choice!(
-        attempt(heading()),
-        attempt(source_block()),
-        attempt(directive()),
-        // HACK this attempt() isn't really ideal,
-        // but it's worth the exact runtime perf for the code encapsulation for now.
-        // (BEN link needs to be parsed before ASN horiz_rule)
-        attempt(horiz_rule()),
-        attempt(list()),
-        ast_block_expr_node()
+        stmt!(heading()),
+        stmt!(source_block()),
+        stmt!(directive()),
+        stmt!(horiz_rule()), // (BEN link needs to be parsed before ASN horiz_rule, only works with stmt!'s attempt)
+        expr!(list_item()),
+        stmt!(ast_block_expr_node())
     )
 }
 
@@ -402,8 +402,8 @@ where
     // |ast_node
     // |linespace
     // |ast_node
-    many::<Vec<_>, _, _>(
-        many1::<Vec<_>, _, _>(linespace()).or((ast_node(), linespace()).map(|(a, _)| vec![a])),
+    opaque!(no_partial(many::<Vec<_>, _, _>(
+        many1::<Vec<_>, _, _>(linespace()).or(ast_node().map(|n| vec![n]))
     )
-    .map(|v| v.into_iter().flatten().collect::<Vec<_>>())
+    .map(|v| v.into_iter().flatten().collect::<Vec<_>>())))
 }

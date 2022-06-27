@@ -3,13 +3,15 @@ use std::{iter::Peekable, slice::Iter};
 use anyhow::Result;
 
 use super::{
-    data::AstNode, AbstractSyntaxTree, BlockExprNode, BlockExprTree, Directive,
-    BackrefAstNode, Route,
+    data::AstNode, AbstractSyntaxTree, BackrefAstNode, BlockExprNode, BlockExprTree, Directive,
+    Route,
 };
 
-pub enum StopAt {
+#[derive(PartialEq, Debug, Clone)]
+pub enum StopReq {
     NextHeadingWithLevel(u16),
-    Eof,
+    NextListWithLevel(u16),
+    AnyHeading,
 }
 
 /// Transform a flat node stream into a tree by recursing.
@@ -18,16 +20,30 @@ pub enum StopAt {
 /// Instead, they are created in a separate pass
 pub fn flat_nodes_to_tree(
     nodes: &mut Peekable<Iter<AstNode>>,
-    stop_at: StopAt,
+    stop_reqs: Vec<StopReq>,
 ) -> Result<AbstractSyntaxTree> {
     let mut out: AbstractSyntaxTree = vec![];
+
     while let Some(node) = {
-        match stop_at {
-            StopAt::NextHeadingWithLevel(target_level) => match nodes.peek() {
-                Some(AstNode::Heading { level, .. }) if *level <= target_level => None,
-                Some(_) | None => nodes.next(),
+        let fulfilled_reqs = stop_reqs.iter().filter(|req| match req {
+            StopReq::NextHeadingWithLevel(target_level) => match nodes.peek() {
+                Some(AstNode::Heading { level, .. }) if level <= target_level => true,
+                Some(_) | None => false,
             },
-            StopAt::Eof => nodes.next(),
+            StopReq::NextListWithLevel(target_level) => match nodes.peek() {
+                Some(AstNode::ListItem(level, _)) if level <= target_level => true,
+                Some(_) | None => false,
+            },
+            StopReq::AnyHeading => match nodes.peek() {
+                Some(AstNode::Heading {..}) => true,
+                _ => false
+            },
+        }).count();
+
+        if fulfilled_reqs != 0 {
+            None
+        } else {
+            nodes.next()
         }
     } {
         match node {
@@ -60,16 +76,33 @@ pub fn flat_nodes_to_tree(
                     title_bet.pop();
                 }
 
+                let mut new_stop_reqs = stop_reqs.clone();
+                new_stop_reqs.push(StopReq::NextHeadingWithLevel(*level));
                 out.push(AstNode::Heading {
                     level: *level,
                     title: title_bet,
                     // Backreferences in children do not exist yet. We do that in another phase.
-                    children: flat_nodes_to_tree(
-                        nodes,
-                        StopAt::NextHeadingWithLevel(*level),
-                    )?.into_iter().map(BackrefAstNode::new_unref).collect::<Vec<_>>(),
+                    children: flat_nodes_to_tree(nodes, new_stop_reqs)?
+                        .into_iter()
+                        .map(BackrefAstNode::new_unref)
+                        .collect::<Vec<_>>(),
                     routing,
                 })
+            }
+
+            AstNode::ListItem(level, _) => {
+                let mut new_stop_reqs = stop_reqs.clone();
+                new_stop_reqs.push(StopReq::NextListWithLevel(*level));
+                new_stop_reqs.push(StopReq::AnyHeading);
+
+                out.push(AstNode::ListItem(
+                    *level,
+                    // Backreferences in children do not exist yet. We do that in another phase.
+                    flat_nodes_to_tree(nodes, new_stop_reqs)?
+                        .into_iter()
+                        .map(BackrefAstNode::new_unref)
+                        .collect::<Vec<_>>(),
+                ))
             }
 
             // Optimization: Linespace is not very useful in the final AST

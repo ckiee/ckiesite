@@ -124,7 +124,7 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
 
         Ok((
             StatusCode::NOT_FOUND,
-            "nothing here yet.. politely go back to where you came from.".to_string(),
+            "nothing here!".to_string(),
         )
             .into_response())
     }

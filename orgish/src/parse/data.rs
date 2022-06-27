@@ -20,7 +20,7 @@ pub enum AstNode {
     Block(BetBlock),
     /// Equivalent to html <hr>
     HorizRule,
-    ListItem(BetBlock),
+    ListItem(u16, Vec<BackrefAstNode>),
     WarningBlock(BetBlock),
 }
 
