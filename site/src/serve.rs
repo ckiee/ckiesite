@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use axum::{
+    extract::Query,
     http::HeaderValue,
     response::{Html, IntoResponse, Response},
 };
@@ -9,10 +10,11 @@ use include_dir::{include_dir, Dir as CompDir};
 use lazy_static::lazy_static;
 use liquid::{object, ParserBuilder};
 use orgish::{
-    parse::{parse_n_pass, stringify_bet, AstNode, Route, OutputTo},
+    parse::{parse_n_pass, stringify_bet, AstNode, OutputTo, Route},
     treewalk::{ast_to_html_string, bet_to_html_string},
 };
 use std::str::FromStr;
+use std::fmt::Write;
 
 use crate::ARGS;
 
@@ -24,11 +26,27 @@ lazy_static! {
         Dir::open_ambient_dir(&ARGS.content_path, ambient_authority()).unwrap();
 }
 
+enum OutputFormat {
+    Html,
+    Ast,
+}
+
 pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
     let uri = if req.uri() == "/" {
         &INDEX_URI
     } else {
         req.uri()
+    };
+
+    // Syntax !@*(#&@!(*#&))11
+    let output_format = if let Some(q) = uri.query() {
+        if q.contains("ast") {
+            OutputFormat::Ast
+        } else {
+            OutputFormat::Html
+        }
+    } else {
+        OutputFormat::Html
     };
 
     if uri.path().starts_with("/static") {
@@ -68,18 +86,37 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                     children,
                     ..
                 } if pg == &uri.path()[1..] => {
-                    let html_buffers = ast_to_html_string(children, OutputTo::Main)?;
                     let liquid_page = CONTENT_DIR.read_to_string("page.liquid")?;
                     let template = liquid_parser.parse(&liquid_page)?;
-                    let globals = object!({
-                        "req_path": format!("{}", uri),
-                        "html": html_buffers.main,
-                        "nav_htmls": html_buffers.nav,
-                        "title": stringify_bet(&title)?,
-                        "html_title": bet_to_html_string(&title)?
-                    });
+                    return match output_format {
+                        OutputFormat::Html => {
+                            let html_buffers = ast_to_html_string(children, OutputTo::Main)?;
+                            let globals = object!({
+                                "req_path": format!("{}", uri),
+                                "html": html_buffers.main,
+                                "nav_htmls": html_buffers.nav,
+                                "nav_htmls_len": html_buffers.nav.len(),
+                                "title": stringify_bet(&title)?,
+                                "html_title": bet_to_html_string(&title)?,
+                                "format": "html"
+                            });
 
-                    return Ok(Html(template.render(&globals)?).into_response());
+                            Ok(Html(template.render(&globals)?).into_response())
+                        }
+
+                        OutputFormat::Ast => {
+                            let globals = object!({
+                                "req_path": format!("{}", uri),
+                                "html": format!("<pre>{children:#?}</pre>"),
+                                "nav_htmls_len": 0,
+                                "title": format!("AST dump of {}", stringify_bet(&title)?),
+                                "html_title": format!(r#"<code>AST</code> dump of "{}""#, bet_to_html_string(&title)?),
+                                "format": "ast"
+                            });
+
+                            Ok(Html(template.render(&globals)?).into_response())
+                        }
+                    };
                 }
                 _ => {}
             }
