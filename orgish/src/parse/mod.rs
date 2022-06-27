@@ -1,4 +1,9 @@
+use std::error::Error;
+
 use anyhow::{anyhow, Result};
+use combine::ParseError;
+use syntect::{easy::HighlightLines, highlighting::ThemeSet, parsing::{SyntaxSet, SyntaxSetBuilder, SyntaxDefinition}, util::as_24_bit_terminal_escaped};
+use owo_colors::{OwoColorize, Color};
 
 mod combiner;
 mod data;
@@ -42,12 +47,16 @@ pub fn parse_n_pass(input: &str) -> Result<PassedSyntaxTree> {
                 .take(line_range)
                 .enumerate()
                 .map(|(idx, line)| {
-                    let line_with_ending = format!("{line}\n");
+                    let line_num = format!("{}|", idx + (pos.line as usize) - 1);
+                    let line_num_cy = line_num.cyan();
+                    let line_with_ending = format!("{line_num_cy}    {line}\n");
                     let highlighted_line = highlighter.highlight(&line_with_ending, &ps);
-                    let term_line = as_24_bit_terminal_escaped(&highlighted_line[..], true);
+                    let term_line = as_24_bit_terminal_escaped(&highlighted_line[..], false);
 
                     if idx == line_range / 2 {
-                        format!("{term_line}----^\n")
+                        let spaces = " ".repeat(pos.column as usize);
+                        let arrows = format!("{s}{m}{s}", s="^".black().on_bright_black(), m="^".black().on_red());
+                        format!("{term_line}    {spaces}{arrows}\n")
                     } else {
                         term_line
                     }

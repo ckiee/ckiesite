@@ -12,3 +12,4 @@ syntect = "4.6.0"
 tracing = "0.1.32"
 serde = { version = "1.0", features = ["derive"] }
 derive_more = "0.99.17"
+owo-colors = "3.4.0"
