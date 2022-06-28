@@ -25,6 +25,9 @@ pub struct Args {
 
     /// Path to the content folder
     content_path: PathBuf,
+
+    /// Path to the static folder
+    static_path: PathBuf,
 }
 
 lazy_static! {

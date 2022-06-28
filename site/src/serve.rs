@@ -13,17 +13,17 @@ use orgish::{
     parse::{parse_n_pass, stringify_bet, AstNode, OutputTo, Route},
     treewalk::{ast_to_html_string, bet_to_html_string},
 };
-use std::str::FromStr;
 use std::fmt::Write;
+use std::str::FromStr;
 
 use crate::ARGS;
-
-static STATIC_DIR: CompDir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../data/static");
 
 lazy_static! {
     static ref INDEX_URI: Uri = Uri::from_str("/index").unwrap();
     static ref CONTENT_DIR: Dir =
         Dir::open_ambient_dir(&ARGS.content_path, ambient_authority()).unwrap();
+    static ref STATIC_DIR: Dir =
+        Dir::open_ambient_dir(&ARGS.static_path, ambient_authority()).unwrap();
 }
 
 enum OutputFormat {
@@ -50,27 +50,18 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
     };
 
     if uri.path().starts_with("/static") {
-        Ok(match STATIC_DIR.get_file(&uri.path()["/static/".len()..]) {
-            None => (StatusCode::NOT_FOUND, "):".to_string()).into_response(),
-            Some(f) => {
-                let mime = mime_guess::from_path(f.path())
-                    .first()
-                    .ok_or_else(|| anyhow!("couldn't guess mimetype for static file"))?
-                    .to_string();
-                let mut resp = (
-                    StatusCode::OK,
-                    f.contents_utf8()
-                        .ok_or_else(|| anyhow!("file to be utf-8"))?
-                        .to_owned(),
-                )
-                    .into_response();
+        let path = &uri.path()["/static/".len()..];
+        let f = STATIC_DIR.read_to_string(path)?;
+        let mime = mime_guess::from_path(path)
+            .first()
+            .ok_or_else(|| anyhow!("couldn't guess mimetype for static file"))?
+            .to_string();
+        let mut resp = (StatusCode::OK, f).into_response();
 
-                resp.headers_mut()
-                    .insert(CONTENT_TYPE, HeaderValue::from_str(&mime).unwrap()); // TODO fix result mess so this can be ?Try
+        resp.headers_mut()
+            .insert(CONTENT_TYPE, HeaderValue::from_str(&mime).unwrap()); // TODO fix result mess so this can be ?Try
 
-                resp
-            }
-        })
+        Ok(resp)
     } else {
         let liquid_parser = ParserBuilder::with_stdlib().build()?;
         let org_file = CONTENT_DIR.read_to_string("index.org")?;
@@ -122,10 +113,6 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
             }
         }
 
-        Ok((
-            StatusCode::NOT_FOUND,
-            "nothing here!".to_string(),
-        )
-            .into_response())
+        Ok((StatusCode::NOT_FOUND, "nothing here!".to_string()).into_response())
     }
 }
