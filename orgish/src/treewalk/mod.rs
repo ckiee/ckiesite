@@ -61,9 +61,6 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
     let defr = to.is_using_default_rendering();
     let nav = to == OutputTo::Nav;
 
-    trace!("node = {node:?}");
-    trace!("to = {to:?}");
-
     Ok(match &node.inner {
         // generic
         AstNode::Heading {

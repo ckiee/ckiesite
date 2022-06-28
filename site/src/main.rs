@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
         let filter_layer = EnvFilter::try_from_default_env()
             .or_else(|_| EnvFilter::try_new("info"))?;
         tracing_subscriber::registry()
-            .with(tracing_tracy::TracyLayer::new())
+            // .with(tracing_tracy::TracyLayer::new())
             .with(filter_layer)
             .with(tracing_subscriber::fmt::layer()) // set RUST_LOG=debug
     })?;
