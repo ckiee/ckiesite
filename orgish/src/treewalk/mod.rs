@@ -4,6 +4,8 @@
 ///
 use anyhow::{anyhow, bail, Result};
 use syntect::{highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet};
+use lazy_static::lazy_static;
+use tracing::trace;
 
 use crate::parse::{
     AstNode, BackrefAstNode, BlockExprNode, BlockExprTree, BlockType, Directive, LinkTarget,
@@ -48,9 +50,19 @@ impl ParseBuffers {
     }
 }
 
+
+lazy_static! {
+    static ref SYNTAX_SET: SyntaxSet = SyntaxSet::load_defaults_newlines();
+    static ref THEME_SET: ThemeSet = ThemeSet::load_defaults();
+}
+
+#[tracing::instrument]
 fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeToHtmlResult> {
     let defr = to.is_using_default_rendering();
     let nav = to == OutputTo::Nav;
+
+    trace!("node = {node:?}");
+    trace!("to = {to:?}");
 
     Ok(match &node.inner {
         // generic
@@ -128,23 +140,21 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
         AstNode::HorizRule if defr => NodeToHtmlResult::Single("<hr>".to_string(), to),
 
         AstNode::SourceBlock { language, code } if defr => {
-            let syntax_set = SyntaxSet::load_defaults_newlines();
             let syntect_lang = match language {
                 x if x == "rust" => "Rust",
                 _ => language,
             };
 
-            let syntax = syntax_set
+            let syntax = SYNTAX_SET
                 .find_syntax_by_name(syntect_lang)
-                .or_else(|| syntax_set.find_syntax_by_extension(syntect_lang))
+                .or_else(|| SYNTAX_SET.find_syntax_by_extension(syntect_lang))
                 // Nothing else worked, so we fall back to plain text..
-                .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
+                .unwrap_or_else(|| SYNTAX_SET.find_syntax_plain_text());
 
-            let theme_set = ThemeSet::load_defaults();
-            let theme = theme_set.themes.get("base16-ocean.light").unwrap();
+            let theme = THEME_SET.themes.get("base16-ocean.light").unwrap();
 
             NodeToHtmlResult::Single(
-                highlighted_html_for_string(code, &syntax_set, syntax, theme),
+                highlighted_html_for_string(code, &SYNTAX_SET, syntax, theme),
                 to,
             )
         }
@@ -153,6 +163,7 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
 }
 
 // block expr tree
+#[tracing::instrument]
 pub fn bet_to_html_string(nodes: &BlockExprTree) -> Result<String> {
     let mut buf = String::with_capacity(4096);
     for node in nodes {

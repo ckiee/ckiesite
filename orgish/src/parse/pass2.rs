@@ -8,6 +8,7 @@ use super::{AbstractSyntaxTree, AstNode, BackrefAstNode, PassedSyntaxTree, Rende
 // them in the future, but they are freely deleteable for
 // performance.
 //
+#[tracing::instrument]
 fn pass2_internal(
     nodes: &mut Peekable<IntoIter<BackrefAstNode>>,
     parent_idx: usize,
@@ -51,6 +52,7 @@ fn pass2_internal(
 
 // Maybe it's right but the type inference reallly doesn't like it.
 #[allow(clippy::needless_collect)]
+#[tracing::instrument]
 pub fn pass2(nodes: AbstractSyntaxTree) -> Result<PassedSyntaxTree> {
     let backref_ready_nodes = nodes
         .into_iter()

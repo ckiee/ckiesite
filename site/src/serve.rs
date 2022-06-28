@@ -7,14 +7,16 @@ use axum::{
 use cap_std::{ambient_authority, fs::Dir};
 use hyper::{header::CONTENT_TYPE, Request, StatusCode, Uri};
 use include_dir::{include_dir, Dir as CompDir};
-use lazy_static::lazy_static;
+use lazy_static::{__Deref, lazy_static};
 use liquid::{object, ParserBuilder};
 use orgish::{
-    parse::{parse_n_pass, stringify_bet, AstNode, OutputTo, Route},
+    parse::{
+        parse_n_pass, stringify_bet, AstNode, BackrefAstNode, OutputTo, PassedSyntaxTree, Route,
+    },
     treewalk::{ast_to_html_string, bet_to_html_string},
 };
-use std::fmt::Write;
-use std::str::FromStr;
+use std::{str::FromStr, intrinsics::transmute};
+use std::{fmt::Write, mem::MaybeUninit};
 
 use crate::ARGS;
 
@@ -24,6 +26,21 @@ lazy_static! {
         Dir::open_ambient_dir(&ARGS.content_path, ambient_authority()).unwrap();
     static ref STATIC_DIR: Dir =
         Dir::open_ambient_dir(&ARGS.static_path, ambient_authority()).unwrap();
+    // Only used with --cache-org
+    static ref AST: Result<Vec<BackrefAstNode>> = {
+        let org_file = CONTENT_DIR.read_to_string("index.org")?;
+        parse_n_pass(&org_file)
+    };
+}
+
+pub fn fill_caches() {
+    use lazy_static::initialize;
+    initialize(&AST);
+    initialize(&CONTENT_DIR);
+    initialize(&STATIC_DIR);
+    if let Err(err) = AST.deref() {
+        panic!("Cached AST parse failed: {err}");
+    }
 }
 
 enum OutputFormat {
@@ -31,6 +48,7 @@ enum OutputFormat {
     Ast,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
     let uri = if req.uri() == "/" {
         &INDEX_URI
@@ -64,8 +82,16 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
         Ok(resp)
     } else {
         let liquid_parser = ParserBuilder::with_stdlib().build()?;
-        let org_file = CONTENT_DIR.read_to_string("index.org")?;
-        let ast = parse_n_pass(&org_file)?;
+        let mut owned_ast: MaybeUninit<PassedSyntaxTree> = MaybeUninit::uninit();
+        let ast = if ARGS.cache_org {
+            AST.deref().as_ref().unwrap()
+        } else {
+            let org_file = CONTENT_DIR.read_to_string("index.org")?;
+            owned_ast.write(parse_n_pass(&org_file)?);
+            // Safety: we *just* wrote to this, so it's safe to assume:
+            // Need to manually drop.
+            unsafe { owned_ast.assume_init_ref() }
+        };
 
         for node in ast {
             match &node.inner {
@@ -112,6 +138,9 @@ pub async fn fallback_handler<B>(req: Request<B>) -> Result<Response> {
                 _ => {}
             }
         }
+
+        // Safety: owned_ast must be initalized.
+        unsafe { if !ARGS.cache_org { owned_ast.assume_init_drop() } };
 
         Ok((StatusCode::NOT_FOUND, "nothing here!".to_string()).into_response())
     }

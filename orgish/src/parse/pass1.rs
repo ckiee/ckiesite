@@ -18,6 +18,7 @@ pub enum StopReq {
 ///
 /// Back references to the parent nodes do not exist in this function's output.
 /// Instead, they are created in a separate pass
+#[tracing::instrument]
 pub fn flat_nodes_to_tree(
     nodes: &mut Peekable<Iter<AstNode>>,
     stop_reqs: Vec<StopReq>,
@@ -137,6 +138,7 @@ pub fn flat_nodes_to_tree(
     Ok(out)
 }
 
+#[derive(Debug)]
 struct BetPassState {
     inside_nbsp: bool,
     #[allow(unused)]
@@ -157,6 +159,7 @@ impl BetPassState {
     }
 }
 
+#[tracing::instrument]
 fn bet_pass(
     nodes: &mut Peekable<Iter<BlockExprNode>>,
     state: &mut BetPassState,

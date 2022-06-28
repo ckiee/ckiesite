@@ -1,13 +1,13 @@
 use axum::{error_handling::HandleError, Router};
 use clap::Parser;
-use hyper::{StatusCode};
+use hyper::StatusCode;
 use lazy_static::lazy_static;
-use std::{
-    net::SocketAddr,
-    path::{PathBuf},
-};
-use tower::{service_fn};
-use tracing::{debug, error, info};
+use std::{net::SocketAddr, path::PathBuf};
+use tower::service_fn;
+use tracing::{debug, error, info, warn};
+use tracing_subscriber::{prelude::*, EnvFilter};
+
+use crate::serve::fill_caches;
 
 pub mod serve;
 
@@ -28,15 +28,33 @@ pub struct Args {
 
     /// Path to the static folder
     static_path: PathBuf,
+
+    /// Whether to cache index.org. This saves around ~20ms per request.
+    #[clap(short, long)]
+    cache_org: bool,
 }
 
 lazy_static! {
     pub static ref ARGS: Args = Args::parse();
 }
 
-#[tokio::main]
+#[tokio::main(worker_threads = 1)]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init(); // loggy log, set RUST_LOG=debug
+    tracing::subscriber::set_global_default({
+        let filter_layer = EnvFilter::try_from_default_env()
+            .or_else(|_| EnvFilter::try_new("info"))?;
+        tracing_subscriber::registry()
+            .with(tracing_tracy::TracyLayer::new())
+            .with(filter_layer)
+            .with(tracing_subscriber::fmt::layer()) // set RUST_LOG=debug
+    })?;
+
+    if !ARGS.cache_org {
+        warn!("--cache-org is not set! expect degraded performance");
+    }
+
+    // Warm the server up.
+    serve::fill_caches();
 
     let app = Router::new().fallback(HandleError::new(
         service_fn(serve::fallback_handler),
