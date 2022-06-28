@@ -50,6 +50,7 @@ impl ParseBuffers {
 
 fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeToHtmlResult> {
     let defr = to.is_using_default_rendering();
+    let nav = to == OutputTo::Nav;
 
     Ok(match &node.inner {
         // generic
@@ -81,13 +82,18 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
         },
 
         //  nav; special navbar rendering
-        AstNode::ListItem(_, ast) if to == OutputTo::Nav => NodeToHtmlResult::Single(
+        AstNode::ListItem(_, ast) if nav => NodeToHtmlResult::Single(
             format!(
                 "{}",
-                ast_to_html_string(ast, OutputTo::Main)?.output(&OutputTo::Main)
+                ast_to_html_string(ast, to)?.output(&to)
             ),
             to,
         ),
+
+        AstNode::Block((_, bet)) if nav => {
+            NodeToHtmlResult::Single(bet_to_html_string(bet)?, to)
+        }
+
 
         //  main; normal html rendering
         AstNode::Directive(d) if defr => NodeToHtmlResult::Single(
@@ -110,7 +116,7 @@ fn ast_node_to_html_string(node: &BackrefAstNode, to: OutputTo) -> Result<NodeTo
         AstNode::ListItem(_, ast) if defr => NodeToHtmlResult::Single(
             format!(
                 "<ul><li>{}</li></ul>",
-                ast_to_html_string(ast, OutputTo::Main)?.output(&OutputTo::Main)
+                ast_to_html_string(ast, to)?.output(&to)
             ),
             to,
         ),

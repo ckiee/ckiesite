@@ -86,7 +86,7 @@ pub enum RenderGroup {
     Nav, // nav
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub enum OutputTo {
     Main,
     Nav,
