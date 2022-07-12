@@ -1,7 +1,11 @@
 {
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    naersk.url = "github:nix-community/naersk";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;
@@ -9,6 +13,7 @@
     mozillapkgs = {
       url = "github:mozilla/nixpkgs-mozilla";
       flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 

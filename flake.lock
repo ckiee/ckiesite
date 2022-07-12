@@ -18,11 +18,11 @@
     },
     "flake-utils": {
       "locked": {
-        "lastModified": 1656065134,
-        "narHash": "sha256-oc6E6ByIw3oJaIyc67maaFcnjYOz1mMcOtHxbEf9NwQ=",
+        "lastModified": 1656928814,
+        "narHash": "sha256-RIFfgBuKz6Hp89yRr7+NR5tzIAbn52h8vT6vXkYjZoM=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "bee6a7250dd1b01844a2de7e02e4df7d8a0a206c",
+        "rev": "7e2a3b3dfd9af950a856d66b0a7d01e3c18aa249",
         "type": "github"
       },
       "original": {
@@ -34,11 +34,11 @@
     "mozillapkgs": {
       "flake": false,
       "locked": {
-        "lastModified": 1650459918,
-        "narHash": "sha256-sroCK+QJTmoXtcRkwZyKOP9iAYOPID2Bwdxn4GkG16w=",
+        "lastModified": 1657214286,
+        "narHash": "sha256-rO/4oymKXU09wG2bcTt4uthPCp1XsBZjxuCJo3yVXNs=",
         "owner": "mozilla",
         "repo": "nixpkgs-mozilla",
-        "rev": "e1f7540fc0a8b989fb8cf701dc4fd7fc76bcf168",
+        "rev": "0508a66e28a5792fdfb126bbf4dec1029c2509e0",
         "type": "github"
       },
       "original": {
@@ -49,7 +49,9 @@
     },
     "naersk": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
         "lastModified": 1655042882,
@@ -67,26 +69,18 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 0,
-        "narHash": "sha256-85O05UeZYFrvpcQ1djMskCMEc4QxOxxxjz03kazZrGA=",
-        "path": "/nix/store/q34wq5z6wb5a52sg569nm6abjqqpmrv2-source",
-        "type": "path"
+        "lastModified": 1657447684,
+        "narHash": "sha256-FCP9AuU1q6PE3vOeM5SFf58f/UKPBAsoSGDUGamNBbo=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5f43d8b088d3771274bcfb69d3c7435b1121ac88",
+        "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 0,
-        "narHash": "sha256-85O05UeZYFrvpcQ1djMskCMEc4QxOxxxjz03kazZrGA=",
-        "path": "/nix/store/q34wq5z6wb5a52sg569nm6abjqqpmrv2-source",
-        "type": "path"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
       }
     },
     "root": {
@@ -95,7 +89,7 @@
         "flake-utils": "flake-utils",
         "mozillapkgs": "mozillapkgs",
         "naersk": "naersk",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       }
     }
   },
