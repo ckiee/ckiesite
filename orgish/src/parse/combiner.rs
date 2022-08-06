@@ -115,7 +115,7 @@ where
             bold(),
             italic(),
             underline(),
-            strikethrough(),
+            attempt(strikethrough()),
             char()
         )
         .message("while parsing block_expr_node")
@@ -174,7 +174,8 @@ where
                 // this is the except on Result
                 // TODO it PANICs. Make it not.
                 .map_err(|e| format!("{}", e))
-                .unwrap_or_else(|_| panic!("In marker_char subparser @ {}", pos))
+                .unwrap_or_else(|e| panic!(r#"In marker_char subparser "{s}" @ {}
+{e}"#, pos))
                 .0)
         }),
         end_2,
@@ -220,11 +221,11 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
     <Input as StreamOnce>::Position: Display,
 {
-    let local_eof = || token(':');
+    let eat = || many1(satisfy(|c| c != ':'));
     let subparser = choice!(
-        (token('#'), take_until(local_eof())).map(|(_, s)| Route::Section(s)),
+        (token('#'), eat()).map(|(_, s)| Route::Section(s)),
         (token('@'), string("nav")).map(|(_, _)| Route::RenderGroup(RenderGroup::Nav)),
-        take_until(local_eof()).map(Route::Page)
+        eat().map(Route::Page)
     );
 
     (token(':'), subparser, token(':'))
@@ -340,7 +341,7 @@ where
         whitespaces(),
         many1::<Vec<_>, _, _>(token('*')).map(|x: Vec<_>| x.len()),
         whitespaces(),
-        many1(choice!(header_routing(), block_expr_node())),
+        many1(choice!(attempt(header_routing()), block_expr_node())),
     )
         .map(|(_, level, _, title)| AstNode::Heading {
             level: level
@@ -362,7 +363,7 @@ where
     // Upstream org also supports * but I don't need that.
     // Like `heading`, the children are added in the next pass.
     (whitespaces(), choice!(token('-'), token('+')), whitespace())
-        .map(|(ws, _, ast)| AstNode::ListItem(ws.len() as u16, Vec::new()))
+        .map(|(ws, _, _)| AstNode::ListItem(ws.len() as u16, Vec::new()))
 }
 
 pub fn ast_node<Input>() -> impl Parser<Input, Output = AstNode>
