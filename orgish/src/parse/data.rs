@@ -53,6 +53,8 @@ pub enum BlockExprNode {
     Underline(BlockExprTree),
     Strikethrough(BlockExprTree),
     NonbreakingSpace(BlockExprTree),
+    /// Toggle content float. CSS `float: right` when HTML `dir="ltr"`
+    FloatToggle(BlockExprTree),
     Warning(BlockExprTree),
     Code(String),
     Link(LinkTarget, Option<BlockExprTree>),

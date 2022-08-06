@@ -289,6 +289,17 @@ where
         .message("while parsing nbsp")
 }
 
+fn float_toggle<Input>() -> impl Parser<Input, Output = BlockExprNode>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input as StreamOnce>::Position: Display,
+{
+    marker_chars(string("ft&"), Box::new(|| string("&ft")))
+        .map(BlockExprNode::FloatToggle)
+        .message("while parsing float toggle")
+}
+
 
 fn warning<Input>() -> impl Parser<Input, Output = BlockExprNode>
 where

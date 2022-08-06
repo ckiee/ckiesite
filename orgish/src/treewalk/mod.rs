@@ -201,5 +201,9 @@ fn block_expr_to_html_string(node: &BlockExprNode) -> Result<String> {
             r#"<div class="warning">{}</div>"#,
             bet_to_html_string(bet)?
         )),
+        BlockExprNode::FloatToggle(bet) => Ok(format!(
+            r#"<span class="float">{}</span>"#,
+            bet_to_html_string(bet)?
+        )),
     }
 }
