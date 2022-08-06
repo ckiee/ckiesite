@@ -109,12 +109,13 @@ where
     opaque!(no_partial(
         choice!(
             attempt(link()),
-            inline_code(),
+            attempt(inline_code()),
             attempt(nbsp()),
+            attempt(float_toggle()),
             attempt(warning()),
-            bold(),
-            italic(),
-            underline(),
+            attempt(bold()),
+            attempt(italic()),
+            attempt(underline()),
             attempt(strikethrough()),
             char()
         )
