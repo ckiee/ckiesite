@@ -12,6 +12,7 @@ pub enum StopReq {
     NextHeadingWithLevel(u16),
     NextListWithLevel(u16),
     AnyHeading,
+    Linespace
 }
 
 /// Transform a flat node stream into a tree by recursing.
@@ -37,6 +38,10 @@ pub fn flat_nodes_to_tree(
             },
             StopReq::AnyHeading => match nodes.peek() {
                 Some(AstNode::Heading {..}) => true,
+                _ => false
+            },
+            StopReq::Linespace => match nodes.peek() {
+                Some(AstNode::Block((_, bet))) if bet == &vec![BlockExprNode::Linespace] => true,
                 _ => false
             },
         }).count();
@@ -95,6 +100,7 @@ pub fn flat_nodes_to_tree(
                 let mut new_stop_reqs = stop_reqs.clone();
                 new_stop_reqs.push(StopReq::NextListWithLevel(*level));
                 new_stop_reqs.push(StopReq::AnyHeading);
+                new_stop_reqs.push(StopReq::Linespace);
 
                 out.push(AstNode::ListItem(
                     *level,
@@ -106,7 +112,8 @@ pub fn flat_nodes_to_tree(
                 ))
             }
 
-            // Optimization: Linespace is not very useful in the final AST
+            // Optimization: Linespace is not very useful in the final AST,
+            // but it is used in this pass for ListItem termination.
             AstNode::Block((_, bet)) if bet == &vec![BlockExprNode::Linespace] => {}
 
             AstNode::Block((ty, bet)) => out.push(AstNode::Block((
