@@ -6,10 +6,6 @@
 
 `ckiesite` parses Org mode files, converts them into HTML, links them together and enforces access control for what I've written. 
 
-## Usage
-
-No. Figure it out yourself.
-
 ## License
 
 SPDX: [`AGPL-3.0-only`](https://spdx.org/licenses/AGPL-3.0-only.html)
